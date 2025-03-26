@@ -22,7 +22,7 @@ export function DataTable({
         <Table className="bg-white">
           <TableHeader table={table} />
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {table?.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   className="hover:bg-gray-100"

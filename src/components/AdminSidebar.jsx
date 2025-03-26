@@ -1,10 +1,9 @@
 import * as React from "react";
-
+import logo from "../assets/logo.png";
 // import { VersionSwitcher } from "@/components/version-switcher";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -20,20 +19,20 @@ import { LuBuilding, LuLayoutDashboard } from "react-icons/lu";
 // This is sample data.
 const data = {
   navMain: [
-    {
-      title: "Trang chủ",
-      icon: <LuBuilding size={20} />,
-      url: ROUTES.ADMIN,
-    },
+    // {
+    //   title: "Trang chủ",
+    //   icon: <LuBuilding size={20} />,
+    //   url: ROUTES.HOME,
+    // },
     {
       title: "Tòa Nhà/CSVC",
       icon: <LuBuilding size={20} />,
-      url: `${ROUTES.ADMIN}${ROUTES.BUILDING}`,
+      url: `${ROUTES.ADMIN}${ROUTES.BUILDINGS}`,
     },
     {
       title: "Phòng Ban",
       icon: <LuLayoutDashboard size={20} />,
-      url: `${ROUTES.ADMIN}${ROUTES.ROOM}`,
+      url: `${ROUTES.ADMIN}${ROUTES.ROOMS}`,
     },
     // {
     //   title: "Tài khoản",
@@ -55,11 +54,11 @@ export function AdminSidebar({ ...props }) {
       className="shadow-[inset_0px_4px_10px_#d5e7fb] bg-light-blue-bg "
       {...props}
     >
-      <SidebarContent className="overflow-hidden bg-light-blue-bg pt-4">
+      <SidebarContent className="overflow-hidden bg-light-blue-bg pt-2">
         {/* We create a SidebarGroup for each parent. */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-primaryBlue flex items-center text-xl font-bold mb-4 ml-4 ">
-            BẢN ĐỒ PTIT
+          <SidebarGroupLabel className="text-primaryBlue flex items-center justify-center text-xl font-bold pb-5  h-fit ml-4 ">
+            <img src={logo} alt="" className="w-14 h-14 object-contain" />
           </SidebarGroupLabel>
           <SidebarGroupContent className="ml-4">
             <SidebarMenu className="overflow-hidden">

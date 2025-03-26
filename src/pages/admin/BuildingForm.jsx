@@ -102,6 +102,7 @@ export function BuildingForm({ open, data = null, setOpen, fetchData }) {
       }
       fetchData();
       setOpen();
+      form.reset();
     } catch (err) {
       setIsLoading(false);
       toast.error("Thêm mới tòa nhà thất bại!", err);

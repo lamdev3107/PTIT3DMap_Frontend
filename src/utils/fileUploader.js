@@ -9,7 +9,13 @@ import {
 import { storage } from "./FirebaseConfig";
 import toast from "react-hot-toast";
 
-const fileUploader = (file, type, setSource) => {
+const fileUploader = (
+  file,
+  type,
+  setSource,
+  setIsUploading,
+  setUploadProgress
+) => {
   //   setIsUploading(true);
   //Firebase docs upload file to web: https://firebase.google.com/docs/storage/web/upload-files?hl=en&authuser=
   let firebasePath = "";
@@ -27,7 +33,8 @@ const fileUploader = (file, type, setSource) => {
       // Observe state change events such as progress, pause, and resume
       // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
       const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-      //   setUploadProgress(progress);
+      setUploadProgress(progress);
+      setIsUploading(true);
 
       // switch (snapshot.state) {
       //   case "paused":
@@ -46,7 +53,8 @@ const fileUploader = (file, type, setSource) => {
       // For instance, get the download URL: https://firebasestorage.googleapis.com/...
       getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
         setSource(downloadURL);
-        // setIsUploading(false);
+        setIsUploading(false);
+        setUploadProgress(0);
       });
     }
   );

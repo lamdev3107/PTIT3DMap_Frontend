@@ -1,8 +1,9 @@
 export const ROUTES = {
   ADMIN: "/admin",
-  HOME: "/home",
-  BUILDING: "/buildings",
-  FLOOR: "/floors",
-  ROOM: "/rooms",
+  HOME: "/*",
+  BUILDINGS: "/buildings",
+  BUILDING_DETAIL: "/buildings/:id",
+  FLOORS: "/floors",
+  ROOMS: "/rooms",
   LOGIN: "/login",
 };

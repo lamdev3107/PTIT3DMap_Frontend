@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { DataTable } from "@/components/DataTable/DataTable";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ArrowUpDown, MoreHorizontal } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -12,25 +12,27 @@ import {
   LuSearch,
   LuTrash2,
 } from "react-icons/lu";
-import { IoRefresh } from "react-icons/io5";
+import { IoArrowBack, IoRefresh } from "react-icons/io5";
 import { useReactTable, getCoreRowModel } from "@tanstack/react-table";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { BuildingForm } from "./BuildingForm";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { FloorForm } from "./FloorForm";
 
 export const Building = () => {
   const navigate = useNavigate();
-  const [searchValue, setSearchValue] = useState("");
+  const { pathname } = useLocation();
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedBuilding, setSelectedBuilding] = useState(null);
   const [data, setData] = useState([]);
+  const [floorsData, setFloorsData] = useState([]);
+  const [selectedFloor, setSelectedFloor] = useState(null);
   const [pagination, setPagination] = useState({
     pageIndex: 0, //initial page index
     pageSize: 10, //default page size
@@ -47,38 +49,38 @@ export const Building = () => {
     value: "desc",
   });
   const fetchData = async () => {
-    let queryParams = {};
-
-    if (searchBy.value === "device") {
-      //Nếu là số
-      if (!isNaN(Number(searchValue))) queryParams.deviceId = searchValue;
-      else {
-        queryParams.deviceName = searchValue;
-      }
-    }
-    if (searchBy.value === "status") {
-      queryParams.status = searchValue === "Tắt" ? "false" : "true";
-    }
-    if (searchBy.value === "createdAt") {
-      queryParams.createdAt = searchValue;
-    }
-    queryParams.limit = pagination.pageSize;
-    queryParams.page = page;
-    queryParams.orderby = orderBy.label;
-    queryParams.order = orderBy.value;
     // Fetch data from API
     try {
-      let searchParam = new URLSearchParams(queryParams).toString();
+      let buildingId = pathname.split("/").slice(-1).toString();
       const response = await axios(
-        import.meta.env.VITE_SERVER_URL + "/buildings?" + searchParam
+        import.meta.env.VITE_SERVER_URL + "/buildings/" + buildingId
       );
       const data = response.data;
       setData(data.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchBuildingFloorsData = async () => {
+    // Fetch data from API
+    try {
+      let buildingId = pathname.slice(-1);
+      const response = await axios(
+        import.meta.env.VITE_SERVER_URL + "/buildings/" + buildingId + "/floors"
+      );
+      const data = response.data;
+      setFloorsData(data.data);
       setPageCount(data.pagination.totalPages);
     } catch (err) {
       console.error(err);
     }
   };
+
+  useEffect(() => {
+    fetchBuildingFloorsData();
+    fetchData();
+  }, [pathname]);
 
   const columns = [
     {
@@ -113,9 +115,7 @@ export const Building = () => {
       accessorKey: "name",
       header: () => {
         return (
-          <div className="p-2 text-sm capitalize font-bold w-fit">
-            Tên tòa nhà/cơ sở vật chất
-          </div>
+          <div className="p-2 text-sm capitalize font-bold w-fit">Tên tầng</div>
         );
       },
       cell: ({ row }) => (
@@ -128,8 +128,23 @@ export const Building = () => {
         return <div className="p-2 text-sm capitalize font-bold">Mô tả</div>;
       },
       cell: ({ row }) => (
-        <div className="text-left">
-          {row.original?.description || <span className="italic">Chưa có</span>}
+        <div className="text-left italic">
+          {row.original?.description || <span className=" ">Chưa có</span>}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "image",
+      header: () => {
+        return <div className="p-2 text-sm capitalize font-bold">Sơ đồ</div>;
+      },
+      cell: ({ row }) => (
+        <div className="flex justify-start">
+          {row.original?.image ? (
+            <img src={row.original?.image} alt="image" className="w-20 h-20" />
+          ) : (
+            <span className="italic text-left">Chưa có</span>
+          )}
         </div>
       ),
     },
@@ -151,13 +166,6 @@ export const Building = () => {
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 className="flex items-center gap-2"
-                // onClick={() => handleEditClick(row.original)}
-              >
-                <LuEye />
-                <span>Xem chi tiết</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="flex items-center gap-2"
                 onClick={() => handleEditClick(row.original)}
               >
                 <LuPencilLine />
@@ -165,7 +173,7 @@ export const Building = () => {
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="flex items-center gap-2"
-                onClick={() => handleDeleteClick(row.original.id)}
+                onClick={() => handleDeleteClick(row.original)}
               >
                 <LuTrash2 />
                 <span>Xóa</span>
@@ -176,29 +184,9 @@ export const Building = () => {
       },
     },
   ];
-  useEffect(() => {
-    fetchData();
-    setPagination((prev) => {
-      return {
-        ...prev,
-        pageSize: pagination.pageSize,
-        pageIndex: page - 1,
-      };
-    });
-  }, [pagination.pageSize, page]);
-  useEffect(() => {
-    fetchData();
-  }, [orderBy]);
-  useEffect(() => {
-    if (searchBy.value === "") {
-      fetchData();
-      setSearchValue("");
-    }
-    return;
-  }, [searchBy]);
 
   const table = useReactTable({
-    data,
+    data: floorsData,
     pageCount: pageCount,
     columns,
     debugTable: true,
@@ -215,25 +203,25 @@ export const Building = () => {
     },
   });
 
-  const handleEditClick = (building) => {
-    setSelectedBuilding(building);
+  const handleEditClick = (floor) => {
+    setSelectedFloor(floor);
     setIsDialogOpen(true);
   };
-  const handleDeleteClick = async (id) => {
-    const confirm = window.confirm(
-      "Bạn có chắc chắn muốn xóa Tòa nhà/CSVC này?"
-    );
+  const handleDeleteClick = async (floor) => {
+    const confirm = window.confirm("Bạn có chắc chắn muốn xóa Tầng này?");
     if (!confirm) return;
     try {
       const response = await axios(
-        import.meta.env.VITE_SERVER_URL + "/buildings/" + id,
+        import.meta.env.VITE_SERVER_URL + "/floors/" + floor.id,
         {
           method: "DELETE",
         }
       );
       if (response?.data?.success) {
-        toast.success("Xóa loại tin thành công!");
-        fetchData();
+        deleteFirebaseItem(floor?.image);
+
+        toast.success("Xóa tầng thành công!");
+        fetchBuildingFloorsData();
       } else {
         toast.error("Xóa loại tin thất bại!");
       }
@@ -244,19 +232,45 @@ export const Building = () => {
   return (
     <>
       <Card className="col-span-2 bg-light-blue-bg p-4 rounded-xl  text-center lg:col-span-1 lg:p-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold mb-3">Chi tiết Tòa nhà/CSVC</h2>
-          <Button
-            onClick={() => setIsDialogOpen(true)}
-            className={`cursor-pointer flex items-center gap-2 px-2 py-1 rounded-lg`}
-          >
-            <LuCirclePlus />
-            <span>Thêm mới</span>
-          </Button>
-        </div>
+        <CardHeader className={"p-0 flex items-center gap-2"}>
+          <IoArrowBack
+            size={20}
+            className="text-gray-800 hover:text-red-primary cursor-pointer"
+            onClick={() => navigate(-1)}
+          />
+          <h2 className="text-lg font-semibold">Chi tiết Tòa nhà/CSVC:</h2>
+        </CardHeader>
         <CardContent className="p-0">
+          <div className="flex  items-center gap-2  mb-3">
+            <p className="text-md font-semibold">Tên: </p>
+
+            <p>{data?.name}</p>
+          </div>
+
+          <div className="flex items-center gap-2 mt-3 mb-3">
+            <p className="text-md font-semibold">Mô tả: </p>
+            <p className="italic">
+              {(!data?.description || data?.description === "") &&
+              data?.description
+                ? data?.description
+                : "Chưa có"}
+            </p>
+          </div>
+          <div className="flex items-start justify-between mt-3 mb-3">
+            <div className="flex items-center gap-2">
+              <p className="text-md font-semibold">Số tầng: </p>
+              <p className="">{floorsData?.length}</p>
+            </div>
+            <Button
+              onClick={() => setIsDialogOpen(true)}
+              className={`cursor-pointer flex items-center gap-2 px-2 py-1 rounded-lg`}
+            >
+              <LuCirclePlus />
+              <span>Thêm mới tầng</span>
+            </Button>
+          </div>
           <DataTable
-            fetchData={fetchData}
+            fetchData={fetchBuildingFloorsData}
             table={table}
             page={page}
             columns={columns}
@@ -264,11 +278,11 @@ export const Building = () => {
           />
         </CardContent>
       </Card>
-      <BuildingForm
+      <FloorForm
         open={isDialogOpen}
         setOpen={setIsDialogOpen}
-        data={selectedBuilding}
-        fetchData={fetchData}
+        data={selectedFloor}
+        fetchData={fetchBuildingFloorsData}
       />
     </>
   );

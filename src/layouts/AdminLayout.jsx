@@ -22,10 +22,10 @@ export const AdminLayout = () => {
     logout();
   };
   return user ? (
-    <SidebarProvider>
+    <SidebarProvider className={`w-screen h-screen overflow-x-hidden`}>
       <AdminSidebar />
       <SidebarInset>
-        <header className="sticky top-0 z-30 flex h-[72px] shrink-0 items-center justify-between gap-2  px-4 ">
+        <header className="sticky top-0 z-30 bg-light-blue-bg shadow-sm flex h-16 shrink-0 items-center justify-between gap-2  px-4 ">
           <div className="text-xl font-bold ">
             {/* <SidebarTrigger className="-ml-1" /> */}
             {/* Chào mừng bạn tới Bản đồ PTIT */}
@@ -44,7 +44,7 @@ export const AdminLayout = () => {
             </Button>
           </div>
         </header>
-        <div className="py-4 px-5">
+        <div className="py-8 px-8">
           <Outlet />
         </div>
       </SidebarInset>

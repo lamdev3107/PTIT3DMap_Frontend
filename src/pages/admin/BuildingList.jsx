@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
+import { ROUTES } from "@/utils/constants";
 
 export const BuildingList = () => {
   const navigate = useNavigate();
@@ -48,20 +49,6 @@ export const BuildingList = () => {
   });
   const fetchData = async () => {
     let queryParams = {};
-
-    if (searchBy.value === "device") {
-      //Nếu là số
-      if (!isNaN(Number(searchValue))) queryParams.deviceId = searchValue;
-      else {
-        queryParams.deviceName = searchValue;
-      }
-    }
-    if (searchBy.value === "status") {
-      queryParams.status = searchValue === "Tắt" ? "false" : "true";
-    }
-    if (searchBy.value === "createdAt") {
-      queryParams.createdAt = searchValue;
-    }
     queryParams.limit = pagination.pageSize;
     queryParams.page = page;
     queryParams.orderby = orderBy.label;
@@ -151,7 +138,12 @@ export const BuildingList = () => {
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 className="flex items-center gap-2"
-                // onClick={() => handleEditClick(row.original)}
+                onClick={() => {
+                  console.log("id", row.original.id);
+                  navigate(
+                    ROUTES.ADMIN + ROUTES.BUILDINGS + "/" + row.original.id
+                  );
+                }}
               >
                 <LuEye />
                 <span>Xem chi tiết</span>
@@ -232,10 +224,10 @@ export const BuildingList = () => {
         }
       );
       if (response?.data?.success) {
-        toast.success("Xóa loại tin thành công!");
+        toast.success("Xóa Tòa nhà/CSVC thành công!");
         fetchData();
       } else {
-        toast.error("Xóa loại tin thất bại!");
+        toast.error("Xóa Tòa nhà/CSVC thất bại!");
       }
     } catch (err) {
       toast.error("Xóa tòa nhà thất bại!", err);
