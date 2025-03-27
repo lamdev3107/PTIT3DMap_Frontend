@@ -1,0 +1,140 @@
+// import { useEffect, useRef } from "react";
+// import img1 from "../assets/images/img_1.jpg";
+// import img2 from "../assets/images/img_2.jpg";
+// import img3 from "../assets/images/img_3.jpg";
+
+// const PanoramaViewer = ({ scene, setScene }) => {
+//     const containerRef = useRef(null);
+
+//     useEffect(() => {
+//         if (!containerRef.current) return;
+
+//         const viewer = pannellum.viewer(containerRef.current, {
+//             default: {
+//                 firstScene: scene, // Lấy scene hiện tại khi khởi tạo
+//                 sceneFadeDuration: 1000,
+//                 autoLoad: true, // Tự động tải panorama mà không cần nhấn nút
+//                 onload: () => {
+//                     // Ẩn nút load panorama khi đã load scene
+//                     const loadButton = document.querySelector('.pnlm-load-button');
+//                     if (loadButton) {
+//                         loadButton.style.display = 'none';
+//                     }
+//                 },
+//             },
+//             scenes: {
+//                 scene1: {
+//                     panorama: img1, // Đặt ảnh panorama cho scene1
+//                     hotSpots: [
+//                         {
+//                             pitch: 0,
+//                             yaw: 90,
+//                             type: "scene",
+//                             text: "Go to Scene 2",
+//                             sceneId: "scene2",
+//                             clickHandlerFunc: () => {
+//                                 viewer.loadScene('scene2'); // Tải scene2 khi nhấn vào hotspot
+//                                 setScene("scene2"); // Cập nhật state của scene
+//                             },
+//                         },
+//                     ],
+//                 },
+//                 scene2: {
+//                     panorama: img2, // Đặt ảnh panorama cho scene2
+//                     hotSpots: [
+//                         {
+//                             pitch: 0,
+//                             yaw: -90,
+//                             type: "scene",
+//                             text: "Go to Scene 1",
+//                             sceneId: "scene1",
+//                             clickHandlerFunc: () => {
+//                                 viewer.loadScene('scene1'); // Tải scene1 khi nhấn vào hotspot
+//                                 setScene("scene1"); // Cập nhật state của scene
+//                             },
+//                         },
+//                         {
+//                             pitch: 0,
+//                             yaw: 90,
+//                             type: "scene",
+//                             text: "Go to Scene 3",
+//                             sceneId: "scene3",
+//                             clickHandlerFunc: () => {
+//                                 viewer.loadScene('scene3'); // Tải scene3 khi nhấn vào hotspot
+//                                 setScene("scene3"); // Cập nhật state của scene
+//                             },
+//                         },
+//                     ],
+//                 },
+//                 scene3: {
+//                     panorama: img3, // Đặt ảnh panorama cho scene3
+//                     hotSpots: [
+//                         {
+//                             pitch: 0,
+//                             yaw: -90,
+//                             type: "scene",
+//                             text: "Go to Scene 2",
+//                             sceneId: "scene2",
+//                             clickHandlerFunc: () => {
+//                                 viewer.loadScene('scene2'); // Tải scene2 khi nhấn vào hotspot
+//                                 setScene("scene2"); // Cập nhật state của scene
+//                             },
+//                         },
+//                     ],
+//                 },
+//             },
+//         });
+
+//         // Clean up on unmount
+//         return () => {
+//             if (viewer) {
+//                 viewer.destroy();
+//             }
+//         };
+//     }, [scene]);
+
+//     return <div ref={containerRef} style={{ width: "100%", height: "100vh" }} />;
+// };
+
+// export default PanoramaViewer;
+
+import React, { useEffect, useRef } from "react";
+
+const PanoramaViewer = ({ scene, hotspots }) => {
+    const containerRef = useRef(null);
+
+    useEffect(() => {
+        if (!containerRef.current) return;
+
+        const viewer = pannellum.viewer(containerRef.current, {
+            default: {
+                firstScene: "scene1", // Đảm bảo mỗi lần tải là scene đầu tiên
+                sceneFadeDuration: 1000,
+            },
+            scenes: {
+                scene1: {
+                    panorama: scene, // Đường dẫn tới ảnh pano
+                    hotSpots: hotspots.map((hotspot, index) => ({
+                        pitch: hotspot.pitch,
+                        yaw: hotspot.yaw,
+                        type: "scene",
+                        text: `Hotspot ${index + 1}`,
+                        sceneId: `scene${index + 2}`, // Dùng sceneId khác cho từng hotspot
+                        clickHandlerFunc: () => {
+                            // Xử lý khi click vào hotspot
+                            // alert(`Going to scene ${index + 2}`);
+                        },
+                    })),
+                },
+            },
+        });
+
+        return () => {
+            if (viewer) viewer.destroy();
+        };
+    }, [scene, hotspots]);
+
+    return <div ref={containerRef} style={{ width: "100%", height: "100vh" }} />;
+};
+
+export default PanoramaViewer;
