@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import PanoramaViewer from "./PanoramaViewer";
 
 const UploadPanorama = () => {
-    const [panoImages, setPanoImages] = useState([]); // Lưu trữ ảnh đã tải
+    const [panoImages, setPanoImages] = useState([]); // Lưu trữ ảnh đã tải lên
     const [selectedImage, setSelectedImage] = useState(null); // Ảnh hiện tại được chọn để preview
     const [hotspots, setHotspots] = useState({}); // Lưu trữ các hotspot cho mỗi ảnh pano
 
@@ -18,10 +18,15 @@ const UploadPanorama = () => {
 
     const handlePreview = () => {
         if (!selectedImage) return;
-        // Tạo tour VR từ ảnh đã tải
-        const hotspotsForSelectedImage = hotspots[selectedImage] || [];
-        // Bạn có thể thực hiện thêm logic ở đây để load scene và thiết lập các hotspot.
-        console.log("Previewing VR Tour with hotspots: ", hotspotsForSelectedImage);
+
+        // Tạo dữ liệu sceneData từ các ảnh và hotspot
+        const sceneData = panoImages.map((image, index) => ({
+            image: image, // Đường dẫn đến ảnh pano
+            hotSpots: hotspots[image] || [], // Hotspot tương ứng với ảnh pano
+        }));
+
+        // Truyền dữ liệu sceneData vào PanoramaViewer để hiển thị
+        console.log("Previewing VR Tour with scene data: ", sceneData);
     };
 
     const handleAddHotspot = (image) => {
@@ -55,8 +60,12 @@ const UploadPanorama = () => {
                 <div>
                     <h3>Preview Panorama</h3>
                     <PanoramaViewer
-                        scene={selectedImage}
-                        hotspots={hotspots[selectedImage] || []}
+                        sceneData={panoImages.map((image) => ({
+                            image,
+                            hotSpots: hotspots[image] || [],
+                        }))}
+                        initialScene={selectedImage}
+                        setScene={setSelectedImage} // Cập nhật scene khi chuyển cảnh
                     />
                 </div>
             )}

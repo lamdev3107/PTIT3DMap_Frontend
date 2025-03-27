@@ -100,7 +100,8 @@
 
 import React, { useEffect, useRef } from "react";
 
-const PanoramaViewer = ({ scene, hotspots }) => {
+
+const PanoramaViewer = ({ scenesData, initialScene, setScene }) => {
     const containerRef = useRef(null);
 
     useEffect(() => {
@@ -108,33 +109,48 @@ const PanoramaViewer = ({ scene, hotspots }) => {
 
         const viewer = pannellum.viewer(containerRef.current, {
             default: {
-                firstScene: "scene1", // Đảm bảo mỗi lần tải là scene đầu tiên
+                firstScene: initialScene, // Scene ban đầu được truyền vào
                 sceneFadeDuration: 1000,
+                autoLoad: true, // Tự động tải panorama mà không cần nhấn nút
+                onload: () => {
+                    // Ẩn nút load panorama khi đã load scene
+                    const loadButton = document.querySelector('.pnlm-load-button');
+                    if (loadButton) {
+                        loadButton.style.display = 'none';
+                    }
+                },
             },
-            scenes: {
-                scene1: {
-                    panorama: scene, // Đường dẫn tới ảnh pano
-                    hotSpots: hotspots.map((hotspot, index) => ({
+            scenes: scenesData.reduce((acc, scene, index) => {
+                // Tạo các scene động từ data
+                acc[`scene${index + 1}`] = {
+                    panorama: scene.image, // Đặt ảnh panorama cho scene
+                    hotSpots: scene.hotSpots.map((hotspot, hotspotIndex) => ({
                         pitch: hotspot.pitch,
                         yaw: hotspot.yaw,
                         type: "scene",
-                        text: `Hotspot ${index + 1}`,
-                        sceneId: `scene${index + 2}`, // Dùng sceneId khác cho từng hotspot
+                        text: hotspot.text,
+                        sceneId: hotspot.sceneId,
                         clickHandlerFunc: () => {
-                            // Xử lý khi click vào hotspot
-                            // alert(`Going to scene ${index + 2}`);
+                            viewer.loadScene(hotspot.sceneId); // Chuyển sang scene khi nhấn vào hotspot
+                            setScene(hotspot.sceneId); // Cập nhật state của scene
                         },
                     })),
-                },
-            },
+                };
+                return acc;
+            }, {}),
         });
 
+        // Clean up on unmount
         return () => {
-            if (viewer) viewer.destroy();
+            if (viewer) {
+                viewer.destroy();
+            }
         };
-    }, [scene, hotspots]);
+    }, [scenesData, initialScene, setScene]);
 
     return <div ref={containerRef} style={{ width: "100%", height: "100vh" }} />;
 };
 
 export default PanoramaViewer;
+
+
