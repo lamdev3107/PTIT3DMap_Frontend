@@ -7,11 +7,13 @@ import { AdminLayout } from "./layouts/AdminLayout";
 import { BuildingList } from "./pages/admin/BuildingList";
 import { Building } from "./pages/admin/Building";
 import { RoomList } from "./pages/admin/RoomList";
+import Demo360 from "./components/Demo360";
 
 function App() {
   return (
     <div style={{ width: "100vw", height: "100vh" }}>
       <Routes>
+        <Route path={`demo-360`} element={<Demo360 />} />
         <Route path={ROUTES.ADMIN} element={<AdminLayout />}>
           <Route
             path={`${ROUTES.ADMIN}/${ROUTES.BUILDINGS}`}
