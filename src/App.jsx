@@ -46,8 +46,8 @@ function App() {
         </Route>
 
         <Route path="/" element={<MainLayout />}>
-          {/* <Route path={"/"} element={<Home />} /> */}
-          <Route path={"/"} element={<Test />} />
+          <Route path={"/"} element={<Home />} />
+          {/* <Route path={"/"} element={<Test />} /> */}
 
           <Route path="/demo" element={<Demo />} />
           <Route path="/demo360" element={<Demo360 />} />
