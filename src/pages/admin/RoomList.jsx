@@ -25,6 +25,8 @@ import {
 import toast from "react-hot-toast";
 import { deleteFirebaseItem } from "@/utils/fileUploader";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { ROUTES } from "@/utils/constants";
 export const columns = [
   {
     accessorKey: "id",
@@ -54,6 +56,7 @@ export const columns = [
   },
 ];
 export const RoomList = () => {
+  const navigate = useNavigate();
   const [searchValue, setSearchValue] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -113,7 +116,9 @@ export const RoomList = () => {
       );
       if (response?.data?.success) {
         toast.success("Xóa phòng ban thành công!");
-        deleteFirebaseItem(room?.image);
+        if (room?.image) {
+          deleteFirebaseItem(room?.image);
+        }
         fetchData();
       } else {
         toast.error("Xóa phòng ban thất bại!!");
@@ -151,9 +156,27 @@ export const RoomList = () => {
     },
     {
       accessorKey: "floor",
-      header: () => {
-        return <div className="text-sm p-2 font-bold capitalize">Tầng</div>;
-      },
+      header: (
+        <Button
+          variant="ghost"
+          className="px-2 hover:bg-gray-100 font-bold"
+          onClick={() => {
+            setOrderBy((prev) => {
+              if (prev.value == "desc") {
+                return { value: "asc", label: "floor" };
+              } else if (prev.value == "asc") {
+                return { value: "desc", label: "floor" };
+              } else {
+                return { value: "desc", label: "floor" };
+              }
+            });
+            fetchData();
+          }}
+        >
+          Tầng
+          <ArrowUpDown />
+        </Button>
+      ),
       cell: ({ row }) => (
         <div className="capitalize text-left">{row.original.floor?.name}</div>
       ),
@@ -161,9 +184,27 @@ export const RoomList = () => {
 
     {
       accessorKey: "building",
-      header: () => {
-        return <div className="text-sm p-2 font-bold capitalize">Tòa nhà</div>;
-      },
+      header: (
+        <Button
+          variant="ghost"
+          className="px-2 hover:bg-gray-100 font-bold"
+          onClick={() => {
+            setOrderBy((prev) => {
+              if (prev.value == "desc") {
+                return { value: "asc", label: "building" };
+              } else if (prev.value == "asc") {
+                return { value: "desc", label: "building" };
+              } else {
+                return { value: "desc", label: "building" };
+              }
+            });
+            fetchData();
+          }}
+        >
+          Tòa nhà
+          <ArrowUpDown />
+        </Button>
+      ),
       cell: ({ row }) => (
         <div className=" text-left">{row.original.floor.building.name}</div>
       ),
@@ -210,6 +251,16 @@ export const RoomList = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                className="flex items-center gap-2"
+                onClick={() => {
+                  console.log("id", row.original.id);
+                  navigate(ROUTES.ADMIN + ROUTES.ROOMS + "/" + row.original.id);
+                }}
+              >
+                <LuEye />
+                <span>Xem chi tiết</span>
+              </DropdownMenuItem>
               <DropdownMenuItem
                 className="flex items-center gap-2"
                 onClick={() => handleEditClick(row.original)}

@@ -5,5 +5,6 @@ export const ROUTES = {
   BUILDING_DETAIL: "/buildings/:id",
   FLOORS: "/floors",
   ROOMS: "/rooms",
+  ROOM_ADMIN_DETAIL: "/rooms/:id",
   LOGIN: "/login",
 };

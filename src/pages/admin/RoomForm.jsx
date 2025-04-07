@@ -34,6 +34,13 @@ const formSchema = z.object({
   name: z.string({
     required_error: "Vui lòng nhập tên tòa nhà",
   }),
+
+  buildingId: z.number({
+    required_error: "Vui lòng chọn tòa nhà",
+  }),
+  floorId: z.number({
+    required_error: "Vui lòng chọn tầng",
+  }),
   description: z.any(),
 });
 
@@ -72,6 +79,9 @@ export function RoomForm({ open, data = null, setOpen, fetchData }) {
       form.reset({
         name: "" + res?.name,
         description: res?.description || "",
+        navigationId: res?.navigation?.id,
+        floorId: res?.floor?.id,
+        buildingId: res?.floor?.building?.id,
       });
       setImgUploaded(res.image);
       setNavigation({
@@ -234,12 +244,21 @@ export function RoomForm({ open, data = null, setOpen, fetchData }) {
       resetForm();
     } catch (err) {
       setIsLoading(false);
-      toast.error("Thêm mới tòa nhà thất bại!", err);
+      toast.error("Thêm mới tòa nhà thất bại!");
 
       console.log("error", err);
     }
   };
-  console.log("form", form.watch());
+  const handleUploadSuccess = (url) => {
+    setImgUploaded(url);
+    setIsLoadingImg(false);
+    setUploadingProgress(0);
+  };
+  const handleUploadProgress = (progress) => {
+    setUploadingProgress(progress);
+    setIsLoadingImg(true);
+  };
+  console.log("Cdfasd", form.watch());
   return (
     <Dialog className="h-fit" open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[90vw] md:max-w-[65vw] h-fit">
@@ -297,6 +316,7 @@ export function RoomForm({ open, data = null, setOpen, fetchData }) {
                         <Combobox
                           className={"w-full"}
                           searchable={false}
+                          onChange={field.onChange}
                           optionList={navigationList}
                           selectedOption={navigation}
                           setSelectedOption={setNavigation}
@@ -327,6 +347,7 @@ export function RoomForm({ open, data = null, setOpen, fetchData }) {
                           searchable={false}
                           optionList={buildingList}
                           selectedOption={building}
+                          onChange={field.onChange}
                           setSelectedOption={setBuilding}
                           placeholder={"Chọn tòa nhà"}
                         />
@@ -355,6 +376,7 @@ export function RoomForm({ open, data = null, setOpen, fetchData }) {
                           searchable={false}
                           disabled={building?.value ? false : true}
                           optionList={floorList}
+                          onChange={field.onChange}
                           selectedOption={floor}
                           setSelectedOption={setFloor}
                           placeholder={"Chọn tầng"}
@@ -418,9 +440,8 @@ export function RoomForm({ open, data = null, setOpen, fetchData }) {
                             fileUploader(
                               file,
                               "images",
-                              setImgUploaded,
-                              setIsLoadingImg,
-                              setUploadingProgress
+                              handleUploadSuccess,
+                              handleUploadProgress
                             );
                           }}
                         />

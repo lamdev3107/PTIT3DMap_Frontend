@@ -1,200 +1,184 @@
-import React, { useState, useEffect, useRef, Suspense } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { OrbitControls, Text3D } from "@react-three/drei";
+import {
+  Float,
+  OrbitControls,
+  PerspectiveCamera,
+  useHelper,
+  useScroll,
+} from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
+import { useMemo, useRef } from "react";
 import * as THREE from "three";
-import { Map3D } from "./Map3D";
-import gsap from "gsap";
-import { Loader2 } from "lucide-react";
+import { Airplane } from "./Airplane";
+import { Building } from "./Building";
+import { angleToRadian } from "@/utils/angleToRadian";
 
-// 📌 Danh sách các tòa nhà và điểm camera tương ứng
-const BUILDINGS = [
-  {
-    position: [-10, 3, -50],
-    size: [3, 6, 3],
-    color: "blue",
-    cameraPos: [-30, 15, -50],
-  },
-  {
-    position: [15, 4, -10],
-    size: [4, 8, 4],
-    clor: "red",
-    cameraPos: [25, 15, -20],
-  },
-  {
-    position: [-15, 5, 10],
-    size: [3, 7, 3],
-    color: "green",
-    cameraPos: [-25, 15, 15],
-  },
-  {
-    position: [-10, 3.5, 30],
-    size: [5, 10, 5],
-    color: "purple",
-    cameraPos: [20, 10, 25],
-  },
-  {
-    position: [0, 6, 0],
-    size: [6, 12, 6],
-    color: "yellow",
-    cameraPos: [0, 15, 30],
-  },
-];
-
-// 📌 Hiển thị các điểm camera (hình cầu màu đỏ, có thể click)
-function CameraPoints({ onClick }) {
-  const [clicked, setClicked] = useState(false);
-
-  return (
-    <>
-      {BUILDINGS.map((building, index) => (
-        <mesh
-          key={index}
-          position={new THREE.Vector3(...building.cameraPos)}
-          onClick={() => onClick(index)}
-        >
-          <Text3D
-            font={"./fonts/helvetiker_regular.typeface.json"} // Đường dẫn font
-            position={[0, 0, 0]}
-            size={5}
-            height={1} // Độ dày của chữ
-            curveSegments={12}
-            bevelEnabled
-            bevelThickness={0.1}
-            bevelSize={0.1}
-            bevelSegments={5}
-            onClick={() => setClicked(!clicked)}
-          >
-            {"A" + (index + 1)}
-            <meshStandardMaterial color={building.color} />
-          </Text3D>
-        </mesh>
-      ))}
-    </>
-  );
-}
-// 📌 Component Tòa Nhà
-function Building({ position, size, color }) {
-  return (
-    <mesh position={position}>
-      <boxGeometry args={size} />
-      <meshStandardMaterial color={color} />
-    </mesh>
-  );
-}
-
-// 📌 Camera Controller (di chuyển theo scroll và click)
-function CameraController({ currentIndex, setCurrentIndex }) {
-  const cameraRef = useRef();
-
-  // 🎯 Xử lý scroll chuột
-  // useEffect(() => {
-  //   const handleScroll = (event) => {
-  //     if (event.deltaY > 0) {
-  //       setCurrentIndex((prev) => Math.min(prev + 1, BUILDINGS.length - 1));
-  //     } else {
-  //       setCurrentIndex((prev) => Math.max(prev - 1, 0));
-  //     }
-  //   };
-
-  //   window.addEventListener("wheel", handleScroll);
-  //   return () => window.removeEventListener("wheel", handleScroll);
-  // }, []);
-
-  // 🎯 Cập nhật vị trí camera khi scroll hoặc click
-  useEffect(() => {
-    if (cameraRef.current) {
-      const targetPos = BUILDINGS[currentIndex].cameraPos;
-      const lookAtPos = BUILDINGS[currentIndex].position;
-
-      gsap.to(cameraRef.current.position, {
-        x: targetPos[0],
-        y: targetPos[1],
-        z: targetPos[2],
-        duration: 2.5,
-        ease: "power2.out",
-        onUpdate: () => {
-          cameraRef.current.lookAt(lookAtPos[0], lookAtPos[1], lookAtPos[2]); // Hướng vào tòa nhà
-        },
-      });
-    }
-  }, [currentIndex]);
-
-  useFrame(({ camera }) => {
-    cameraRef.current = camera;
-  });
-
-  return null;
-}
-
-function CameraHelperComponent() {
-  const { camera, scene } = useThree();
-  const helperRef = useRef();
-
-  React.useEffect(() => {
-    const helper = new THREE.CameraHelper(camera);
-    scene.add(helper);
-    helperRef.current = helper;
-
-    return () => {
-      scene.remove(helper);
-    };
-  }, [camera, scene]);
-
-  return null;
-}
-// 📌 Mặt Đất
 function Ground() {
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.1, 0]} receiveShadow>
-      <boxGeometry args={[300, 300]} />
-      <meshStandardMaterial color="gray" />
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
+      <planeGeometry args={[50, 50]} />
+      <meshStandardMaterial color={"gray"} />
     </mesh>
   );
 }
+const LINE_NB_POINTS = 12990;
 
-// 📌 Component Chính
 export default function CampusMap() {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const orbitControlsRef = useRef();
+  const curve = useMemo(() => {
+    return new THREE.CatmullRomCurve3(
+      [
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0, 0, -5),
+        new THREE.Vector3(10, 0, -5),
+        new THREE.Vector3(30, 0, -5),
+        new THREE.Vector3(40, 0, -5),
+        new THREE.Vector3(30, 0, -5),
+        new THREE.Vector3(20, 0, -10),
+        new THREE.Vector3(10, 0, -20),
+        new THREE.Vector3(-3, 0, -30),
+      ],
+      false,
+      "catmullrom",
+      0.5
+    );
+  }, []);
 
+  const linePoints = useMemo(() => {
+    return curve.getPoints(LINE_NB_POINTS);
+  }, [curve]);
+
+  const shape = useMemo(() => {
+    const shape = new THREE.Shape();
+    shape.moveTo(0, -0.2);
+    shape.lineTo(0, 0.2);
+
+    return shape;
+  }, []); // Đã sửa dependency array, bỏ curve vì không cần thiết
+
+  const cameraGroup = useRef();
+  const scroll = useScroll();
+
+  useFrame((_state, delta) => {
+    // Tính toán vị trí hiện tại dựa trên scroll offset
+    const scrollOffset = Math.min(
+      Math.round(scroll.offset * linePoints.length),
+      linePoints.length - 1
+    );
+
+    // Lấy điểm hiện tại và điểm tiếp theo trên đường curve
+    const currentPoint = linePoints[scrollOffset];
+    const nextPoint =
+      linePoints[Math.min(scrollOffset + 1, linePoints.length - 1)];
+
+    // Tính toán góc xoay dựa trên chênh lệch x giữa 2 điểm
+    const xDiff = (nextPoint.x - currentPoint.x) * 80;
+    const rotationAngle =
+      (xDiff < 0 ? 1 : -1) * Math.min(Math.abs(xDiff), Math.PI / 3);
+
+    // Tạo quaternion cho máy bay và camera
+    const planeRotation = new THREE.Quaternion().setFromEuler(
+      new THREE.Euler(
+        airplane.current.rotation.x,
+        airplane.current.rotation.y,
+        rotationAngle
+      )
+    );
+
+    const cameraRotation = new THREE.Quaternion().setFromEuler(
+      new THREE.Euler(
+        cameraGroup.current.rotation.x,
+        rotationAngle,
+        cameraGroup.current.rotation.z
+      )
+    );
+
+    // Áp dụng xoay mượt cho máy bay và camera
+    airplane.current.quaternion.slerp(planeRotation, delta * 2);
+    cameraGroup.current.quaternion.slerp(cameraRotation, delta * 2);
+
+    // Di chuyển camera group theo đường curve
+    cameraGroup.current.position.lerp(currentPoint, delta * 24);
+    cameraGroup.current.lookAt(airplane.current.position);
+  });
+
+  const airplane = useRef();
+  const cameraRef = useRef(); // Tham chiếu đến camera
+  useHelper(cameraRef, THREE.CameraHelper); // Gắn CameraHelper
   return (
-    <Canvas camera={{ position: [-30, 10, -30], fov: 50 }} shadows>
-      {/* Ánh sáng */}
-      <ambientLight intensity={1} />
-      <directionalLight position={[10, 15, 10]} intensity={1.5} castShadow />
-
-      {/* Mặt đất */}
-      <Ground />
-
-      {/* Các tòa nhà */}
-      {BUILDINGS.map((b, index) => (
-        <Building
-          key={index}
-          position={b.position}
-          size={b.size}
-          color={b.color}
+    <>
+      {/* <OrbitControls enableZoom={false} /> */}
+      <color attach="background" args={["#c9eaef"]} />
+      <group ref={cameraGroup}>
+        <PerspectiveCamera
+          ref={cameraRef}
+          position={[0, 0, 15]}
+          rotation-x={angleToRadian(15)}
+          fov={30}
+          makeDefault
         />
-      ))}
-      {/* <Suspense fallback={<Loader2 className="animate-spin" />}> */}
-      <Map3D />
-      {/* </Suspense> */}
+        <group ref={airplane}>
+          <Float floatIntensity={2} speed={2}>
+            <Airplane
+              rotation-y={angleToRadian(90)}
+              scale={[0.2, 0.2, 0.2]}
+              position-y={0}
+            />
+          </Float>
+        </group>
+      </group>
+      {/* Sequence camera - chỉ hoạt động khi sequence active */}
+      <group position-y={-2}>
+        <mesh>
+          <extrudeGeometry
+            args={[
+              shape,
+              {
+                steps: LINE_NB_POINTS,
+                bevelEnabled: false,
+                extrudePath: curve,
+              },
+            ]}
+          />
+          <meshStandardMaterial color={"red"} opacity={0.7} transparent />
+        </mesh>
+        <group>
+          {/* <OrbitControls /> */}
+          <ambientLight intensity={1} />
+          <directionalLight
+            position={[10, 15, 10]}
+            intensity={1.5}
+            castShadow
+          />
 
-      {/* Hiển thị điểm camera (có thể click) */}
-      <CameraPoints onClick={setCurrentIndex} />
-
-      {/* Điều khiển camera */}
-      <CameraController
-        currentIndex={currentIndex}
-        setCurrentIndex={setCurrentIndex}
-      />
-      <CameraHelperComponent />
+          {/* <Ground /> */}
+          <Building scale={[2, 2, 2]} rotation={[0, Math.PI / 2, 0]} />
+          <Building
+            position={[-5, 0, 0]}
+            scale={[2, 2, 2]}
+            rotation={[0, -Math.PI / 2, 0]}
+          />
+          <Building
+            position={[-5, 0, -6]}
+            scale={[2, 2, 2]}
+            rotation={[0, Math.PI, 0]}
+          />
+        </group>
+      </group>
       <OrbitControls
-        enablePan={true}
-        // enableZoom={false}
-        // minPolarAngle={Math.PI / 4} // 45 độ
-        // maxPolarAngle={Math.PI / 4} // 45 độ
-        // minAzimuthAngle={-Math.PI / 2} // -90 độ
-        // maxAzimuthAngle={Math.PI / 2} // 90 độ
+        // autoRotate={true}
+        maxAzimuthAngle={30}
+        enablePan={false}
+        enableZoom={false}
+        enableRotate={false}
+        ref={orbitControlsRef}
+        onChange={(e) => {
+          console.log(
+            "position, rotation",
+            e.target.object.position,
+            e.target.object.rotation
+          );
+        }}
       />
-    </Canvas>
+    </>
   );
 }

@@ -68,7 +68,7 @@ export function AdminSidebar({ ...props }) {
                     asChild
                     key={id}
                     className={`${
-                      pathname === item.url
+                      pathname.includes(item.url)
                         ? "bg-red-primary hover:text-white  text-white rounded-l-full hover:bg-red-primary overflow-hidden shadow-md"
                         : "bg-transparent hover:text-red-primary hover:bg-transparent rounded-l-full overflow-hidden"
                     }  `}
@@ -81,7 +81,7 @@ export function AdminSidebar({ ...props }) {
                       {
                         <div
                           className={`p-2 rounded-l-full ${
-                            pathname === item.url
+                            pathname.includes(item.url)
                               ? " rounded-full shadow-inner hover:text-white text-white "
                               : "bg-transparent "
                           } `}

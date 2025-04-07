@@ -218,8 +218,10 @@ export const Building = () => {
         }
       );
       if (response?.data?.success) {
-        deleteFirebaseItem(floor?.image);
-
+        console.log("floor", floor);
+        if (floor?.image && floor?.image !== "") {
+          deleteFirebaseItem(floor?.image);
+        }
         toast.success("Xóa tầng thành công!");
         fetchBuildingFloorsData();
       } else {

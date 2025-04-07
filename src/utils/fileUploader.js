@@ -9,13 +9,7 @@ import {
 import { storage } from "./FirebaseConfig";
 import toast from "react-hot-toast";
 
-const fileUploader = (
-  file,
-  type,
-  setSource,
-  setIsUploading,
-  setUploadProgress
-) => {
+const fileUploader = (file, type, onUploadSuccess, onUploadProgress) => {
   //   setIsUploading(true);
   //Firebase docs upload file to web: https://firebase.google.com/docs/storage/web/upload-files?hl=en&authuser=
   let firebasePath = "";
@@ -33,8 +27,7 @@ const fileUploader = (
       // Observe state change events such as progress, pause, and resume
       // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
       const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-      setUploadProgress(progress);
-      setIsUploading(true);
+      onUploadProgress(progress);
 
       // switch (snapshot.state) {
       //   case "paused":
@@ -52,9 +45,7 @@ const fileUploader = (
       // Handle successful uploads on complete
       // For instance, get the download URL: https://firebasestorage.googleapis.com/...
       getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-        setSource(downloadURL);
-        setIsUploading(false);
-        setUploadProgress(0);
+        onUploadSuccess(downloadURL);
       });
     }
   );
@@ -64,11 +55,11 @@ export const deleteFirebaseItem = (referenceUrl) => {
   const deleteRef = ref(storage, referenceUrl);
   deleteObject(deleteRef)
     .then(() => {
-      toast.success("Delete file success");
+      toast.success("Delete firebase file success");
       return;
     })
     .catch((error) => {
-      toast.error("Delete file failed", error);
+      toast.error("Delete firebase file failed", error);
       return;
     });
 };

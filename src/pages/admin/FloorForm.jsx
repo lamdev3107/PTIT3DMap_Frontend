@@ -18,13 +18,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import { Textarea } from "@/components/ui/textarea";
 import fileUploader, { deleteFirebaseItem } from "@/utils/fileUploader";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -102,7 +96,7 @@ export function FloorForm({ open, data = null, setOpen, fetchData }) {
       if (!data) {
         const response = await createNewFloorService(payload);
         if (response?.data?.success) {
-          toast.success("Thêm mới Tòa nhà/CSVC thành công!");
+          toast.success("Thêm mới Tầng thành công!");
           setIsLoading(false);
           setImgUploaded(null);
           setIsLoadingImg(false);
@@ -142,10 +136,18 @@ export function FloorForm({ open, data = null, setOpen, fetchData }) {
       form.reset();
     }
   }, [open]);
-  console.log("descriptions", form.watch());
+  const handleUploadSuccess = (url) => {
+    setImgUploaded(url);
+    setIsLoadingImg(false);
+    setUploadingProgress(0);
+  };
+  const handleUploadProgress = (progress) => {
+    setUploadingProgress(progress);
+    setIsLoadingImg(true);
+  };
   return (
     <Dialog className="h-fit" open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[90vw] md:max-w-[65vw] h-fit max-h-[90vh] ">
+      <DialogContent className="sm:max-w-[90vw] md:max-w-[65vw] h-fit max-h-[90vh] overflow-auto">
         <DialogHeader className={"pb-3 shadow-b-md"}>
           <DialogTitle>
             {data ? "Chỉnh sửa thông tin tầng" : "Thêm mới tầng"}
@@ -161,7 +163,7 @@ export function FloorForm({ open, data = null, setOpen, fetchData }) {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="relative h-[calc(100%-165px)] overflow-auto px-3"
+            className="relative h-[560px)] overflow-auto px-3"
           >
             <div className="grid  grid-cols-2 gap-5 ">
               {/* Tên tòa nhà */}
@@ -241,9 +243,8 @@ export function FloorForm({ open, data = null, setOpen, fetchData }) {
                             fileUploader(
                               file,
                               "images",
-                              setImgUploaded,
-                              setIsLoadingImg,
-                              setUploadingProgress
+                              handleUploadSuccess,
+                              handleUploadProgress
                             );
                           }}
                         />
@@ -267,8 +268,8 @@ export function FloorForm({ open, data = null, setOpen, fetchData }) {
                       {console.log("dfasdfa", field)}
 
                       <FormControl>
-                        <TextEditor
-                          className="border border-r-none"
+                        <Textarea
+                          className="border h-36 border-r-none  overflow-y-auto"
                           type="text"
                           value={field.value}
                           onChange={field.onChange}

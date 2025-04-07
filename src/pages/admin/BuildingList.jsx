@@ -53,6 +53,7 @@ export const BuildingList = () => {
     queryParams.page = page;
     queryParams.orderby = orderBy.label;
     queryParams.order = orderBy.value;
+    queryParams.search = searchValue;
     // Fetch data from API
     try {
       let searchParam = new URLSearchParams(queryParams).toString();
@@ -63,6 +64,7 @@ export const BuildingList = () => {
       setData(data.data);
       setPageCount(data.pagination.totalPages);
     } catch (err) {
+      toast.error("Lấy dữ liệu thất bại!");
       console.error(err);
     }
   };
@@ -98,13 +100,28 @@ export const BuildingList = () => {
     },
     {
       accessorKey: "name",
-      header: () => {
-        return (
-          <div className="p-2 text-sm capitalize font-bold w-fit">
-            Tên tòa nhà/cơ sở vật chất
-          </div>
-        );
-      },
+      header: (
+        <Button
+          variant="ghost"
+          className="px-2 hover:bg-gray-100 font-bold"
+          onClick={() => {
+            setOrderBy((prev) => {
+              if (prev.value == "desc") {
+                return { value: "asc", label: "name" };
+              } else if (prev.value == "asc") {
+                return { value: "desc", label: "name" };
+              } else {
+                return { value: "desc", label: "name" };
+              }
+            });
+            fetchData();
+          }}
+        >
+          Tên tòa nhà/cơ sở vật chất
+          <ArrowUpDown />
+        </Button>
+      ),
+
       cell: ({ row }) => (
         <div className="text-left w-fit">{row.original?.name}</div>
       ),
@@ -236,17 +253,50 @@ export const BuildingList = () => {
   return (
     <>
       <Card className="col-span-2 bg-light-blue-bg p-4 rounded-xl  text-center lg:col-span-1 lg:p-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold mb-3">Danh sách Tòa nhà/CSVC</h2>
-          <Button
-            onClick={() => setIsDialogOpen(true)}
-            className={`cursor-pointer flex items-center gap-2 px-2 py-1 rounded-lg`}
-          >
-            <LuCirclePlus />
-            <span>Thêm mới</span>
-          </Button>
-        </div>
         <CardContent className="p-0">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-semibold mb-3">
+              Danh sách Tòa nhà/CSVC
+            </h2>
+          </div>
+          <div className="flex items-center justify-between mb-3 relative">
+            <div className="flex items-center gap-2">
+              <div className="relative py-1">
+                <Input
+                  // disabled={searchBy.value === ""}
+                  placeholder={`Tìm kiếm tòa nhà/CSVC...`}
+                  value={searchValue}
+                  onChange={(event) => {
+                    setSearchValue(event.target.value);
+                  }}
+                  className="max-w-sm min-w-72 bg-white "
+                />
+                <LuSearch
+                  onClick={() => {
+                    // setSearchValue("");
+                    fetchData();
+                  }}
+                  size={19}
+                  className="absolute text-gray-400 hover:text-black cursor-pointer transition-all duration-200 ease-out top-[calc(50%)] -translate-y-[calc(50%)] right-4 "
+                />
+              </div>
+              <Button
+                onClick={() => fetchData()}
+                variant="outline"
+                size="icon"
+                className="h-10 w-10"
+              >
+                <IoRefresh className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button
+              onClick={() => setIsDialogOpen(true)}
+              className={`cursor-pointer flex items-center gap-2 px-4 py-1 rounded-lg`}
+            >
+              <LuCirclePlus />
+              <span>Thêm mới</span>
+            </Button>
+          </div>
           <DataTable
             fetchData={fetchData}
             table={table}
