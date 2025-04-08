@@ -1,3 +1,5 @@
+import * as THREE from "three";
+
 const BUILDINGS = [
   {
     id: "a",
@@ -152,3 +154,4 @@ const BUILDINGS = [
     ],
   },
 ];
+export { BUILDINGS };

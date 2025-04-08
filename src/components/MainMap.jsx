@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect, useMemo } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { PerspectiveCamera, SheetProvider } from "@theatre/r3f";
+import cameraSequence from "../assets/demoScroll.json";
 import { editable as e } from "@theatre/r3f";
 import {
   OrbitControls,
@@ -18,6 +19,7 @@ import { angleToRadian } from "@/utils/angleToRadian";
 import { FaExternalLinkAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { getProject } from "@theatre/core";
+import { BUILDINGS } from "@/utils/fakeData";
 
 const Hotspot = ({ position, description, buildingId }) => {
   const [hovered, setHovered] = useState(false);
@@ -118,7 +120,7 @@ const Ground = () => {
   );
 };
 
-const Scene = ({ selectedBuilding, onSelectBuilding }) => {
+const Scene = ({ selectedBuilding, onSelectBuilding, sequence }) => {
   const { camera } = useThree();
   const [isTourActive, setIsTourActive] = useState(false);
   const [currentTourIndex, setCurrentTourIndex] = useState(-1);
@@ -127,6 +129,11 @@ const Scene = ({ selectedBuilding, onSelectBuilding }) => {
   const camRef = useRef();
   const lookAtTarget = useRef(new THREE.Vector3());
   const scroll = useScroll();
+  useFrame(() => {
+    const scrollProgress = scroll.offset; // Từ 0 đến 1
+    const duration = sequence.length || 12; // Thời lượng sequence, đơn vị: giây
+    sequence.position = scrollProgress * duration;
+  });
 
   // Trigger state để ví dụ log khi qua điểm
 
@@ -208,8 +215,19 @@ const Scene = ({ selectedBuilding, onSelectBuilding }) => {
 
 const MainMap = ({ selectedBuilding, onSelectBuilding }) => {
   // Tạo project Theatre.js
-  const theatreProject = getProject("Scroll Camera Sequence");
+  const theatreProject = getProject("Scroll Camera Sequence", {
+    state: cameraSequence,
+  });
+  theatreProject.ready.then(() => console.log("Project loaded!"));
   const cameraSheet = theatreProject.sheet("Camera Movement");
+  const sequence = cameraSheet.sequence;
+
+  // Bắt đầu phát sequence
+  // sequence.play();
+  console.log(cameraSequence);
+
+  // Tạm dừng sequence
+  // sequence.pause();
   return (
     <div className="campus-canvas bg-blue-50 h-screen w-full absolute top-0 left-0 z-10">
       <Canvas shadows dpr={[1, 2]}>
@@ -218,6 +236,7 @@ const MainMap = ({ selectedBuilding, onSelectBuilding }) => {
             <Scene
               selectedBuilding={selectedBuilding}
               onSelectBuilding={onSelectBuilding}
+              sequence={sequence}
             />
           </ScrollControls>
         </SheetProvider>
