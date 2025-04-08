@@ -134,6 +134,7 @@ const Scene = ({ selectedBuilding, onSelectBuilding, sequence }) => {
     const duration = sequence.length || 12; // Thời lượng sequence, đơn vị: giây
     sequence.position = scrollProgress * duration;
   });
+  console.log(sequence);
 
   // Trigger state để ví dụ log khi qua điểm
 
