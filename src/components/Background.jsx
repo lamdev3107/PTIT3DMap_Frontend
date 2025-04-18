@@ -10,7 +10,7 @@ export const Background = () => {
         <LayerMaterial
           lighting="physical"
           transmission={1}
-          // side={THREE.Backside}
+          side={THREE.Backside}
         >
           <Gradient
             colorA={"red"}

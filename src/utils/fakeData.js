@@ -3,11 +3,12 @@ import * as THREE from "three";
 const BUILDINGS = [
   {
     id: "a",
-    name: "Tòa Nhà Hành Chính",
+    name: "Kí túc xá B5",
+    linkFile: "./apartment_building.glb" ,
     position: new THREE.Vector3(0, 0, 0),
     rotation: [0, Math.PI / 2, 0],
     color: "#4285F4",
-    scale: [1, 1.5, 1],
+    scale: [0.1, 0.1, 0.1],
     category: "administrative",
     description:
       "Tòa nhà chính của khuôn viên, nơi đặt văn phòng hành chính và các dịch vụ sinh viên.",
@@ -38,7 +39,8 @@ const BUILDINGS = [
   },
   {
     id: "b",
-    name: "Thư Viện",
+    name: "Tòa nhà A2",
+    linkFile: "./download.glb" ,
     position: new THREE.Vector3(-2, 0, 2),
     color: "#EA4335",
     scale: [1, 1, 1],
@@ -69,6 +71,7 @@ const BUILDINGS = [
   {
     id: "c",
     name: "Trung Tâm Khoa Học",
+    linkFile: "./download.glb" ,
     position: new THREE.Vector3(3, 0, 6),
     color: "#FBBC05",
     scale: [1.2, 0.8, 1],
@@ -98,10 +101,11 @@ const BUILDINGS = [
   {
     id: "d",
     name: "Trung Tâm Sinh Viên",
+    linkFile: "./apartment_building.glb" ,
     position: new THREE.Vector3(-2, 0, -2),
     color: "#34A853",
     rotation: [0, Math.PI, 0],
-    scale: [1, 0.7, 1],
+    scale: [0.1, 0.1, 0.1],
     category: "student",
     description:
       "Không gian dành cho sinh viên thư giãn, tổ chức sự kiện và các hoạt động ngoại khóa.",
@@ -120,8 +124,9 @@ const BUILDINGS = [
     id: "e",
     name: "Khoa Kỹ Thuật",
     position: new THREE.Vector3(2, 0, -2),
+    linkFile: "./apartment_building.glb" ,
     color: "#8AB4F8",
-    scale: [0.8, 1.2, 1],
+    scale: [0.1, 0.1, 0.1],
     rotation: [0, -Math.PI, 0],
     category: "engineering",
     description:

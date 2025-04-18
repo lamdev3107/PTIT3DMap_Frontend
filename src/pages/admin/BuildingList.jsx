@@ -156,7 +156,6 @@ export const BuildingList = () => {
               <DropdownMenuItem
                 className="flex items-center gap-2"
                 onClick={() => {
-                  console.log("id", row.original.id);
                   navigate(
                     ROUTES.ADMIN + ROUTES.BUILDINGS + "/" + row.original.id
                   );

@@ -22,7 +22,7 @@ export const AdminLayout = () => {
     logout();
   };
   return user ? (
-    <SidebarProvider className={`w-screen h-screen overflow-x-hidden`}>
+    <SidebarProvider className={`w-screen h-screen `}>
       <AdminSidebar />
       <SidebarInset>
         <header className="sticky top-0 z-30 bg-light-blue-bg shadow-sm flex h-16 shrink-0 items-center justify-between gap-2  px-4 ">
@@ -44,7 +44,7 @@ export const AdminLayout = () => {
             </Button>
           </div>
         </header>
-        <div className="py-8 px-8">
+        <div className="py-8 px-8 overflow-y-auto">
           <Outlet />
         </div>
       </SidebarInset>

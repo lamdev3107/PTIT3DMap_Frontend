@@ -21,7 +21,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 // import "./index.css";
 
-export default function Demo360({ open, data = null, setOpen }) {
+export default function TourForm({ open, data = null, setOpen }) {
   const [scenes, setScenes] = useState([]);
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
   const [currentScene, setCurrentScene] = useState(null);
@@ -498,12 +498,7 @@ export default function Demo360({ open, data = null, setOpen }) {
   };
 
   return (
-    <Dialog
-      className="h-fit p-2"
-      open={open}
-      onOpenChange={onOpenChange}
-      onPointerDownOutside={(e) => e.preventDefault()}
-    >
+    <Dialog className="h-fit p-2" open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="sm:max-w-[90vw] gap-1 md:max-w-[80vw]  h-fit max-h-[95vh] overflow-hidden p-0"
         onInteractOutside={(event) => {

@@ -9,7 +9,6 @@ import {
   LuCirclePlus,
   LuEye,
   LuPencilLine,
-  LuSearch,
   LuTrash2,
 } from "react-icons/lu";
 import { IoArrowBack, IoRefresh } from "react-icons/io5";
@@ -22,22 +21,24 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FloorForm } from "./FloorForm";
 import { Canvas } from "@react-three/fiber";
-import { BuildingModel } from "@/components/BuildingModel";
+// import { FloorModel } from "@/components/FloorModel";
 import { OrbitControls } from "@react-three/drei";
 import { Separator } from "@/components/ui/separator";
-import { ROUTES } from "@/utils/constants";
+import { RoomForm } from "./RoomForm";
+import { ImageZoom } from "@/components/ImageZoom";
 
-export const Building = () => {
+export const Floor = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [floorData, setFloorData] = useState(null);
   const [data, setData] = useState([]);
-  const [floorsData, setFloorsData] = useState([]);
-  const [selectedFloor, setSelectedFloor] = useState(null);
+  const [roomsData, setRoomsData] = useState([]);
+  const [selectedRoom, setSelectedRoom] = useState(null);
   const [pagination, setPagination] = useState({
     pageIndex: 0, //initial page index
     pageSize: 10, //default page size
@@ -56,9 +57,9 @@ export const Building = () => {
   const fetchData = async () => {
     // Fetch data from API
     try {
-      let buildingId = pathname.split("/").slice(-1).toString();
+      let floorsId = pathname.split("/").slice(-1).toString();
       const response = await axios(
-        import.meta.env.VITE_SERVER_URL + "/buildings/" + buildingId
+        import.meta.env.VITE_SERVER_URL +  "/floors/" + floorsId
       );
       const data = response.data;
       setData(data.data);
@@ -67,15 +68,15 @@ export const Building = () => {
     }
   };
 
-  const fetchBuildingFloorsData = async () => {
+  const fetchFloorRoomsData = async () => {
     // Fetch data from API
     try {
-      let buildingId = pathname.slice(-1);
+      let floorId = pathname.slice(-1);
       const response = await axios(
-        import.meta.env.VITE_SERVER_URL + "/buildings/" + buildingId + "/floors"
+        import.meta.env.VITE_SERVER_URL + "/floors/" + floorId + "/rooms"
       );
       const data = response.data;
-      setFloorsData(data.data);
+      setRoomsData(data.data);
       setPageCount(data.pagination.totalPages);
     } catch (err) {
       console.error(err);
@@ -83,13 +84,17 @@ export const Building = () => {
   };
 
   useEffect(() => {
-    fetchBuildingFloorsData();
+   
+    fetchFloorRoomsData();
     fetchData();
   }, [pathname]);
+  let buildingId = pathname.split("/")[3];
+  let floorId = pathname.split("/").slice(-1).toString();
+
 
   const columns = [
     {
-      accessorKey: "id",
+      accessorKey: "Mã phòng",
       header: () => {
         return (
           <Button
@@ -98,11 +103,11 @@ export const Building = () => {
             onClick={() => {
               setOrderBy((prev) => {
                 if (prev.value == "desc") {
-                  return { value: "asc", label: "id" };
+                  return { value: "asc", label: "roomId" };
                 } else if (prev.value == "asc") {
-                  return { value: "desc", label: "id" };
+                  return { value: "desc", label: "roomId" };
                 } else {
-                  return { value: "desc", label: "id" };
+                  return { value: "desc", label: "roomId" };
                 }
               });
             }}
@@ -113,14 +118,14 @@ export const Building = () => {
         );
       },
       cell: ({ row }) => (
-        <div className="text-left capitalize px-4">{row.getValue("id")}</div>
+        <div className="text-left capitalize px-4">{row.getValue("roomId")}</div>
       ),
     },
     {
       accessorKey: "name",
       header: () => {
         return (
-          <div className="p-2 text-sm capitalize font-bold w-fit">Tên tầng</div>
+          <div className="p-2 text-sm capitalize font-bold w-fit">Tên phòng</div>
         );
       },
       cell: ({ row }) => (
@@ -156,7 +161,6 @@ export const Building = () => {
     {
       id: "actions",
       enableHiding: true,
-
       cell: ({ row }) => {
         // const payment = row.original;
 
@@ -169,17 +173,6 @@ export const Building = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-            <DropdownMenuItem
-                className="flex items-center gap-2"
-                onClick={() => {
-                  navigate(
-                    ROUTES.ADMIN + ROUTES.BUILDINGS + "/" + row.original.buildingId + ROUTES.FLOORS + "/" + row.original.id
-                  );
-                }}
-              >
-                <LuEye />
-                <span>Xem chi tiết</span>
-              </DropdownMenuItem>
               <DropdownMenuItem
                 className="flex items-center gap-2"
                 onClick={() => handleEditClick(row.original)}
@@ -202,7 +195,7 @@ export const Building = () => {
   ];
 
   const table = useReactTable({
-    data: floorsData,
+    data: roomsData,
     pageCount: pageCount,
     columns,
     debugTable: true,
@@ -219,27 +212,27 @@ export const Building = () => {
     },
   });
 
-  const handleEditClick = (floor) => {
-    setSelectedFloor(floor);
+  const handleEditClick = (room) => {
+    setSelectedRoom(room);
     setIsDialogOpen(true);
   };
-  const handleDeleteClick = async (floor) => {
+  const handleDeleteClick = async (room) => {
     const confirm = window.confirm("Bạn có chắc chắn muốn xóa Tầng này?");
     if (!confirm) return;
     try {
       const response = await axios(
-        import.meta.env.VITE_SERVER_URL + "/floors/" + floor.id,
+        import.meta.env.VITE_SERVER_URL + "/rooms/" + room.id,
         {
           method: "DELETE",
         }
       );
       if (response?.data?.success) {
-        console.log("floor", floor);
-        if (floor?.image && floor?.image !== "") {
-          deleteFirebaseItem(floor?.image);
+        console.log("room", room);
+        if (room?.image && room?.image !== "") {
+          deleteFirebaseItem(room?.image);
         }
         toast.success("Xóa tầng thành công!");
-        fetchBuildingFloorsData();
+        fetchFloorRoomsData();
       } else {
         toast.error("Xóa loại tin thất bại!");
       }
@@ -248,24 +241,36 @@ export const Building = () => {
     }
   };
   return (
-    <div className="overflow-x-auto">
+    <>
       <Card className="col-span-2 bg-light-blue-bg p-4 rounded-xl  text-center lg:col-span-1 lg:p-4">
-        <CardHeader className={"p-0 flex items-center gap-2 border-b pb-0"}>
+        <CardHeader className={"p-0 flex items-center gap-2 border-b"}>
           <IoArrowBack
             size={20}
             className="text-gray-800 hover:text-red-primary cursor-pointer"
             onClick={() => navigate(-1)}
           />
-          <h2 className="text-lg font-semibold">{data?.name}</h2>
+          <Link
+            href={() => navigate("/admin/buildings/" + data?.building.id)}
+          >
+            <h2 className="text-lg font-semibold hover:text-red-primary">{data?.building?.name + " /"}</h2>
+          </Link>
+          <h2 className="text-lg font-semibold">{data?.name }</h2>
         </CardHeader>
         <CardContent className="p-0">
-          {/* <div className="flex  items-center gap-2  mb-3">
-            <p className="text-md font-semibold">Tên: </p>
+    
 
-            <p>{data?.name}</p>
-          </div> */}
+          <div className="flex flex-col justify-start mx-auto h-56">
+            <p className="text-md font-semibold">Sơ đồ mặt bằng: </p>
 
-          {/* <div className="flex items-center gap-2 mt-3 mb-3">
+            <ImageZoom
+              src={data?.image}
+              alt="image"
+              className="h-full w-fit mx-auto object-contain"
+            />
+          </div>
+
+
+          <div className="flex items-center gap-2 mt-3 mb-3">
             <p className="text-md font-semibold">Mô tả: </p>
             <p className="italic">
               {(!data?.description || data?.description === "") &&
@@ -273,54 +278,24 @@ export const Building = () => {
                 ? data?.description
                 : "Chưa có"}
             </p>
-          </div> */}
-          <div className="flex justify-start items-center gap-2 mt-3 mb-5">
-            <p className="text-md font-semibold w-[90px] text-left">
-              Model 3D:{" "}
-            </p>
-            {data?.modelURL ? (
-              <div className="flex-1 bg-white h-[300px] w-full border rounded-md relative">
-                <Canvas className="w-[200px] ">
-                  <Suspense>
-                    <ambientLight intensity={0.5} />
-                    <directionalLight
-                      theatreKey="directionalLight"
-                      position={[5, 5, 5]}
-                      intensity={1}
-                      castShadow
-                      shadow-mapSize-width={1024}
-                      shadow-mapSize-height={1024}
-                    />
-                    <OrbitControls />
-                    data?.modelURL
-                    <BuildingModel
-                      position={[0, 0, 0]}
-                      scale={[1.5, 1.5, 1.5]}
-                      linkFile={data?.modelURL}
-                    />
-                  </Suspense>
-                </Canvas>
-              </div>
-            ) : (
-              <p className="italic">Chưa có</p>
-            )}
           </div>
+     
 
           <div className="flex items-start justify-between mt-3 mb-3">
             <div className="flex items-center gap-2">
-              <p className="text-md font-semibold">Số tầng: </p>
-              <p className="">{floorsData?.length}</p>
+              <p className="text-md font-semibold">Số phòng: </p>
+              <p className="">{roomsData?.length}</p>
             </div>
             <Button
               onClick={() => setIsDialogOpen(true)}
               className={`cursor-pointer flex items-center gap-2 px-2 py-1 rounded-lg`}
             >
               <LuCirclePlus />
-              <span>Thêm mới tầng</span>
+              <span>Thêm mới phòng</span>
             </Button>
           </div>
           <DataTable
-            fetchData={fetchBuildingFloorsData}
+            fetchData={fetchFloorRoomsData}
             table={table}
             page={page}
             columns={columns}
@@ -328,12 +303,16 @@ export const Building = () => {
           />
         </CardContent>
       </Card>
-      <FloorForm
+      <RoomForm
         open={isDialogOpen}
         setOpen={setIsDialogOpen}
-        data={selectedFloor}
-        fetchData={fetchBuildingFloorsData}
+        data={selectedRoom}
+        fetchData={fetchFloorRoomsData}
+        floorData = {{
+          floorId: floorId,
+          buildingId: buildingId
+        }}
       />
-    </div>
+    </>
   );
 };

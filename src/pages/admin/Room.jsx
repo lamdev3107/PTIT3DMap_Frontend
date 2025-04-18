@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
 import { IoArrowBack } from "react-icons/io5";
-import Demo360 from "@/components/Demo360";
+import Demo360 from "@/components/TourForm";
 import { LuCirclePlus } from "react-icons/lu";
 import { Button } from "@/components/ui/button";
 

@@ -129,7 +129,7 @@ export function FloorForm({ open, data = null, setOpen, fetchData }) {
   useEffect(() => {
     if (!open) {
       if (imgUploaded) {
-        deleteFirebaseItem(imgUploaded);
+        // deleteFirebaseItem(imgUploaded);
         setImgUploaded(null);
         setIsLoadingImg(false);
       }

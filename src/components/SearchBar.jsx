@@ -67,7 +67,7 @@ const SearchBar = ({ onSelectBuilding, onSelectRoom }) => {
         isExpanded ? "scale-105" : "scale-100"
       }`}
     >
-      <div className="glassmorphism rounded-xl overflow-hidden transition-all duration-300 shadow-xl">
+      <div className="bg-white rounded-xl overflow-hidden transition-all duration-300 shadow-xl">
         <div className="flex items-center p-3">
           <Search className="h-5 w-5 text-gray-400 mr-2" />
           <input

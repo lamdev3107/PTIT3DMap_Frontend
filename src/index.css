@@ -8,6 +8,35 @@
   --color-red-primary: #de4046;
   --color-light-blue-bg: #eaf4fd;
   --color-primary: #eaf4fd;
+  --color-text: #39374c;
+  --color-text-secondary: #666666;
+
+  --animate-rotate-resize: rotate-resize 1s ease-in-out forwards;
+
+  @keyframes rotate-resize {
+    0% {
+      transform: rotate(45deg);
+      width: 4rem; /* Tương đương với w-16 */
+    }
+    30% {
+      transform: rotate(0deg);
+      width: 4rem;
+    }
+    100% {
+      transform: rotate(0deg);
+      width: 32rem;
+    }
+  }
+}
+
+canvas,
+body,
+html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+
+  overflow: hidden;
 }
 .glassmorphism {
   background: rgba(255, 255, 255, 0.2);
@@ -21,7 +50,7 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
+  width: 100vw;
   height: 100vh;
   z-index: 0;
 }

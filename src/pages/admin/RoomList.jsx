@@ -90,6 +90,7 @@ export const RoomList = () => {
       const data = await response.json();
       setData(data.data);
       setPageCount(data.pagination.totalPages);
+      
     } catch (err) {
       console.error(err);
     }
@@ -128,6 +129,34 @@ export const RoomList = () => {
     }
   };
   const columns = [
+    {
+      accessorKey: "Mã phòng",
+      header: () => {
+        return (
+          <Button
+            variant="ghost"
+            className="font-bold"
+            onClick={() => {
+              setOrderBy((prev) => {
+                if (prev.value == "desc") {
+                  return { value: "asc", label: "roomId" };
+                } else if (prev.value == "asc") {
+                  return { value: "desc", label: "roomId" };
+                } else {
+                  return { value: "desc", label: "roomId" };
+                }
+              });
+            }}
+          >
+            ID
+            <ArrowUpDown />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-left capitalize px-4">{row.getValue("roomId")}</div>
+      ),
+    },
     {
       accessorKey: "name",
       header: (
@@ -336,7 +365,7 @@ export const RoomList = () => {
       <Card className="col-span-2 bg-light-blue-bg p-4 rounded-xl  text-center lg:col-span-1 lg:p-4">
         <CardContent className="p-0 ">
           <div className="flex justify-between items-center ">
-            <h2 className="font-semibold  text-lg mb-3">Danh sách phòng ban</h2>
+            <h2 className="font-semibold  text-lg mb-3">Danh sách phòng ban </h2>
           </div>
           <div className="flex items-center justify-between mb-3 relative">
             <div className="relative py-1">
