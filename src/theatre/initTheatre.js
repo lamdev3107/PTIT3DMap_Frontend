@@ -1,6 +1,6 @@
 import studio from "@theatre/studio";
 import extension from "@theatre/r3f/dist/extension";
-import cameraSequence from "@/assets/demoScroll.json";
+import cameraSequence from "@/assets/project.json";
 import { getProject } from "@theatre/core";
 
 if (import.meta.env.DEV) {
