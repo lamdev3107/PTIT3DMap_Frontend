@@ -1,18 +1,18 @@
 import { ROUTES } from "@/utils/constants";
-import React, { createContext, useContext } from "react";
+import React, { createContext, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user")) || {};
+  const user = JSON.parse(localStorage.getItem("user")) || null;
   const login = (userData) => {
     window.localStorage.setItem("user", JSON.stringify(userData));
   };
 
   const logout = () => {
-    navigate(ROUTES.LOGIN);
+    navigate(`${ROUTES.ADMIN}${ROUTES.LOGIN}`);
     window.localStorage.removeItem("user");
   };
 

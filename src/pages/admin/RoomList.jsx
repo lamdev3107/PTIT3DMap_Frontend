@@ -27,6 +27,7 @@ import { deleteFirebaseItem } from "@/utils/fileUploader";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
+import { ImageZoom } from "@/components/ImageZoom";
 export const columns = [
   {
     accessorKey: "id",
@@ -75,7 +76,7 @@ export const RoomList = () => {
   const fetchData = async () => {
     let queryParams = {};
     if (searchValue !== "") {
-      queryParams[name] = searchValue;
+      queryParams.name = searchValue;
     }
     queryParams.limit = pagination.pageSize;
     queryParams.page = page;
@@ -90,7 +91,6 @@ export const RoomList = () => {
       const data = await response.json();
       setData(data.data);
       setPageCount(data.pagination.totalPages);
-      
     } catch (err) {
       console.error(err);
     }
@@ -154,7 +154,7 @@ export const RoomList = () => {
         );
       },
       cell: ({ row }) => (
-        <div className="text-left capitalize px-4">{row.getValue("roomId")}</div>
+        <div className="text-left capitalize px-4">{row.original.roomId}</div>
       ),
     },
     {
@@ -241,10 +241,10 @@ export const RoomList = () => {
     {
       accessorKey: "description",
       header: () => {
-        return <div className="text-sm p-2 font-bold capitalize">Mô tả</div>;
+        return <div className="text-sm p-2 font-bold  capitalize">Mô tả</div>;
       },
       cell: ({ row }) => (
-        <div className="text-left">
+        <div className="text-left italic truncate max-w-[300px]">
           {row.original?.description || <span className="italic">Chưa có</span>}
         </div>
       ),
@@ -257,7 +257,11 @@ export const RoomList = () => {
       cell: ({ row }) => (
         <div className="flex justify-start">
           {row.original?.image ? (
-            <img src={row.original?.image} alt="image" className="w-20 h-20" />
+            <ImageZoom
+              src={row.original?.image}
+              alt="image"
+              className="w-20 h-20"
+            />
           ) : (
             <span className="italic text-left">Chưa có</span>
           )}
@@ -342,48 +346,54 @@ export const RoomList = () => {
       },
     },
   });
-  const optionList = [
-    {
-      label: "Tòa nhà A1",
-      value: "",
-    },
-    {
-      label: "Tìm kiếm theo tên",
-      value: "temperature",
-    },
-    {
-      label: "Tìm kiếm theo tầng",
-      value: "humidity",
-    },
-    {
-      label: "Tìm kiếm theo Tòa nhà",
-      value: "light",
-    },
-  ];
+
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter") {
+      event.target.blur();
+      fetchData();
+    }
+  };
+
+  const handleRowClick = (row) => {
+    navigate(ROUTES.ADMIN + ROUTES.ROOM_DETAIL.replace(":id", row.original.id));
+  };
   return (
     <>
       <Card className="col-span-2 bg-light-blue-bg p-4 rounded-xl  text-center lg:col-span-1 lg:p-4">
         <CardContent className="p-0 ">
           <div className="flex justify-between items-center ">
-            <h2 className="font-semibold  text-lg mb-3">Danh sách phòng ban </h2>
+            <h2 className="font-semibold  text-lg mb-3">
+              Danh sách phòng ban{" "}
+            </h2>
           </div>
           <div className="flex items-center justify-between mb-3 relative">
-            <div className="relative py-1">
-              <Input
-                // disabled={searchBy.value === ""}
-                placeholder={`Tìm kiếm phòng ban...`}
-                value={searchValue}
-                onChange={(event) => {
-                  setSearchValue(event.target.value);
-                  setPage(1);
-                }}
-                className="max-w-sm min-w-72 bg-white "
-              />
-              <LuSearch
+            <div className="flex items-center gap-2">
+              <div className="relative py-1">
+                <Input
+                  placeholder={`Tìm kiếm phòng ban theo tên...`}
+                  value={searchValue}
+                  onChange={(event) => {
+                    setSearchValue(event.target.value);
+                  }}
+                  onKeyDown={handleKeyDown}
+                  className="max-w-sm min-w-72 bg-white"
+                />
+                <LuSearch
+                  onClick={() => {
+                    fetchData();
+                  }}
+                  size={19}
+                  className="absolute text-gray-400 hover:text-black cursor-pointer transition-all duration-200 ease-out top-[calc(50%)] -translate-y-[calc(50%)] right-4"
+                />
+              </div>
+              <Button
                 onClick={() => fetchData()}
-                size={20}
-                className="absolute text-gray-400 hover:text-black cursor-pointer transition-all duration-200 ease-out top-[calc(50%)] -translate-y-[calc(50%)] right-4 "
-              />
+                variant="outline"
+                size="icon"
+                className="h-10 w-10"
+              >
+                <IoRefresh className="h-4 w-4" />
+              </Button>
             </div>
             <Button
               onClick={() => setIsDialogOpen(true)}
@@ -411,6 +421,7 @@ export const RoomList = () => {
             page={page}
             columns={columns}
             setPage={setPage}
+            onRowClick={handleRowClick}
           />
         </CardContent>
       </Card>

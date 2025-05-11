@@ -59,7 +59,7 @@ export function FloorForm({ open, data = null, setOpen, fetchData }) {
         name: "" + data?.name,
         description:
           data?.description === "" || data?.description === null
-            ? "Chưa có"
+            ? ""
             : data?.description,
       });
       setImgUploaded(data?.image);
@@ -265,16 +265,8 @@ export function FloorForm({ open, data = null, setOpen, fetchData }) {
                       <span className="text-secondary ml-1.5">(*)</span>
                     </FormLabel>
                     <div className="h-fit p2 text-sm rounded-md flex items-center">
-                      {console.log("dfasdfa", field)}
-
                       <FormControl>
-                        <Textarea
-                          className="border h-36 border-r-none  overflow-y-auto"
-                          type="text"
-                          value={field.value}
-                          onChange={field.onChange}
-                          placeholder="Nhập thông tin mô tả..."
-                        />
+                        <TextEditor onChange={field.onChange} value={field.value} />
                       </FormControl>
                     </div>
 

@@ -3,6 +3,7 @@ export const ROUTES = {
   HOME: "/",
   BUILDINGS: "/buildings",
   BUILDING_DETAIL: "/buildings/:id",
+  ROOM_DETAIL: "/rooms/:id",
   FLOOR_ADMIN_DETAIL: "/floors/:id",
   FLOORS: "/floors",
   ROOMS: "/rooms",

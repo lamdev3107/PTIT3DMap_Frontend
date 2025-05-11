@@ -1,33 +1,26 @@
-import React, { useState, useEffect } from "react";
-import { ArrowDown, MousePointer } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import MainMap from "@/components/MainMap";
 import Navbar from "@/components/Navbar";
 import BuildingInfo from "@/components/BuildingInfo";
 import FloorSelector from "@/components/FloorSelector";
-import LoadingScreen from "@/components/LoadingScreen";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
+import LoadingDetailBuilding from "@/components/LoadingDetailBuilding";
+import { InstructionDialog } from "@/components/InstructionDialog";
+import { AiOutlineInfo } from "react-icons/ai";
+import { AnimatePresence } from "framer-motion";
+import { RoomCategory } from "@/components/RoomCategory";
+import { useApp } from "@/provider/AppProvider";
 
 const FinalHome = () => {
   const [selectedBuilding, setSelectedBuilding] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [start, setStart] = useState(false);
   const [selectedFloor, setSelectedFloor] = useState(null);
-  const [showScrollHint, setShowScrollHint] = useState(true);
-  const [showTourHint, setShowTourHint] = useState(true);
-
-  // Simulate loading progress
+  const [instructionsOpen, setInstructionsOpen] = useState(false);
+  const [openRoomCategory, setOpenRoomCategory] = useState(false);
+  const { setSelectedRoom } = useApp();
   useEffect(() => {
-    const interval = setInterval(() => {
-      setLoadingProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setTimeout(() => setLoading(false), 500); // Small delay before hiding loading screen
-          return 100;
-        }
-        return prev + 5;
-      });
-    }, 200);
-
-    return () => clearInterval(interval);
+    setSelectedRoom(null);
   }, []);
 
   const handleSelectBuilding = (id) => {
@@ -35,18 +28,6 @@ const FinalHome = () => {
     setSelectedFloor(null); // Reset selected floor when a new building is selected
     setShowScrollHint(false);
     setShowTourHint(false);
-  };
-
-  const handleSelectRoom = (buildingId, roomId, floorLevel) => {
-    setSelectedBuilding(buildingId);
-    setSelectedFloor(floorLevel);
-    setShowScrollHint(false);
-    setShowTourHint(false);
-  };
-
-  const handleCloseInfo = () => {
-    setSelectedBuilding(null);
-    setSelectedFloor(null);
   };
 
   const handleSearch = (query) => {
@@ -60,10 +41,7 @@ const FinalHome = () => {
 
   return (
     <>
-      {/* {loading ? (
-        <LoadingScreen progress={loadingProgress} />
-      ) : ( */}
-      <div className="relative min-h-screen overflow-hidden ">
+      <div className="relative min-h-screen overflow-hidden">
         {/* Background gradient */}
         <div className="fixed inset-0 bg-gradient-to-b from-white to-[#e5ecff] z-[-2]" />
 
@@ -76,8 +54,8 @@ const FinalHome = () => {
         {/* Overlay UI Elements */}
         <Navbar
           onSearch={handleSearch}
-          onSelectBuilding={handleSelectBuilding}
-          onSelectRoom={handleSelectRoom}
+          openRoomCategory={openRoomCategory}
+          setOpenRoomCategory={setOpenRoomCategory}
         />
 
         {/* Floor selector (now on the left side) */}
@@ -94,26 +72,29 @@ const FinalHome = () => {
           onSelectFloor={handleSelectFloor}
         />
 
-        {/* Scroll hint animation */}
-        {showScrollHint && (
-          <div className="fixed bottom-12  left-1/2 transform -translate-x-1/2 text-center z-30 animate-bounce">
-            <div className="bg-white px-4 py-2 rounded-full flex items-center gap-2">
-              <ArrowDown className="h-4 w-4" />
-              <span className="text-sm font-medium">
-                Cuộn chuột để tham quan khuôn viên trường
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Tour hint animation */}
-
-        {/* Instructions overlay */}
-        {/* <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none opacity-50 z-10">
-        <p className="text-lg font-light">Nhấp vào tòa nhà để khám phá</p>
-      </div> */}
+        {/* Instructions Button */}
+        <div className="fixed bottom-8 right-8 z-20">
+          <Dialog
+            className=""
+            open={instructionsOpen}
+            onOpenChange={setInstructionsOpen}
+          >
+            <DialogTrigger asChild>
+              <Button className="rounded-full h-9 bg-white px-4 shadow-md hover:bg-blue-50 text-red-primary hover:text-red-primary  ">
+                <AiOutlineInfo classdName="h-6 w-6" />
+              </Button>
+            </DialogTrigger>
+            <InstructionDialog />
+          </Dialog>
+        </div>
       </div>
-      {/* )} */}
+      <LoadingDetailBuilding started={start} onStarted={() => setStart(true)} />
+
+      <AnimatePresence>
+        {openRoomCategory && (
+          <RoomCategory onClose={() => setOpenRoomCategory(false)} />
+        )}
+      </AnimatePresence>
     </>
   );
 };

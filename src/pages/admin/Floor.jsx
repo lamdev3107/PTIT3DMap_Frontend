@@ -2,16 +2,10 @@
 import { DataTable } from "@/components/DataTable/DataTable";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { ArrowUpDown, MoreHorizontal } from "lucide-react";
-import React, { Suspense, useEffect, useState } from "react";
-import {
-  LuCirclePlus,
-  LuEye,
-  LuPencilLine,
-  LuTrash2,
-} from "react-icons/lu";
-import { IoArrowBack, IoRefresh } from "react-icons/io5";
+import React, { useEffect, useState } from "react";
+import { LuCirclePlus, LuEye, LuPencilLine, LuTrash2 } from "react-icons/lu";
+import { IoArrowBack } from "react-icons/io5";
 import { useReactTable, getCoreRowModel } from "@tanstack/react-table";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -21,21 +15,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { FloorForm } from "./FloorForm";
-import { Canvas } from "@react-three/fiber";
-// import { FloorModel } from "@/components/FloorModel";
-import { OrbitControls } from "@react-three/drei";
-import { Separator } from "@/components/ui/separator";
 import { RoomForm } from "./RoomForm";
 import { ImageZoom } from "@/components/ImageZoom";
+import { ROUTES } from "@/utils/constants";
 
 export const Floor = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [floorData, setFloorData] = useState(null);
+  const [isOpenFloorForm, setIsIsOpenFloorForm] = useState(false);
   const [data, setData] = useState([]);
   const [roomsData, setRoomsData] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -59,7 +50,7 @@ export const Floor = () => {
     try {
       let floorsId = pathname.split("/").slice(-1).toString();
       const response = await axios(
-        import.meta.env.VITE_SERVER_URL +  "/floors/" + floorsId
+        import.meta.env.VITE_SERVER_URL + "/floors/" + floorsId
       );
       const data = response.data;
       setData(data.data);
@@ -71,26 +62,23 @@ export const Floor = () => {
   const fetchFloorRoomsData = async () => {
     // Fetch data from API
     try {
-      let floorId = pathname.slice(-1);
+      let floorsId = pathname.split("/").slice(-1).toString();
       const response = await axios(
-        import.meta.env.VITE_SERVER_URL + "/floors/" + floorId + "/rooms"
+        import.meta.env.VITE_SERVER_URL + "/floors/" + floorsId + "/rooms"
       );
       const data = response.data;
       setRoomsData(data.data);
-      setPageCount(data.pagination.totalPages);
+      setPageCount(data?.pagination.totalPages);
     } catch (err) {
       console.error(err);
     }
   };
-
   useEffect(() => {
-   
     fetchFloorRoomsData();
     fetchData();
   }, [pathname]);
   let buildingId = pathname.split("/")[3];
   let floorId = pathname.split("/").slice(-1).toString();
-
 
   const columns = [
     {
@@ -118,14 +106,16 @@ export const Floor = () => {
         );
       },
       cell: ({ row }) => (
-        <div className="text-left capitalize px-4">{row.getValue("roomId")}</div>
+        <div className="text-left capitalize px-4">{row.original.roomId}</div>
       ),
     },
     {
       accessorKey: "name",
       header: () => {
         return (
-          <div className="p-2 text-sm capitalize font-bold w-fit">Tên phòng</div>
+          <div className="p-2 text-sm capitalize font-bold w-fit">
+            Tên phòng
+          </div>
         );
       },
       cell: ({ row }) => (
@@ -138,8 +128,11 @@ export const Floor = () => {
         return <div className="p-2 text-sm capitalize font-bold">Mô tả</div>;
       },
       cell: ({ row }) => (
-        <div className="text-left italic">
-          {row.original?.description || <span className=" ">Chưa có</span>}
+        <div
+          className="text-left italic truncate max-w-[300px]"
+          title={row.original?.description}
+        >
+          {row.original?.description || <span>Chưa có</span>}
         </div>
       ),
     },
@@ -151,7 +144,11 @@ export const Floor = () => {
       cell: ({ row }) => (
         <div className="flex justify-start">
           {row.original?.image ? (
-            <img src={row.original?.image} alt="image" className="w-20 h-20" />
+            <ImageZoom
+              src={row.original?.image}
+              alt="image"
+              className="w-20 h-20"
+            />
           ) : (
             <span className="italic text-left">Chưa có</span>
           )}
@@ -173,6 +170,15 @@ export const Floor = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                className="flex items-center gap-2"
+                onClick={() => {
+                  navigate(ROUTES.ADMIN + ROUTES.ROOMS + "/" + row.original.id);
+                }}
+              >
+                <LuEye />
+                <span>Xem chi tiết</span>
+              </DropdownMenuItem>
               <DropdownMenuItem
                 className="flex items-center gap-2"
                 onClick={() => handleEditClick(row.original)}
@@ -216,6 +222,9 @@ export const Floor = () => {
     setSelectedRoom(room);
     setIsDialogOpen(true);
   };
+  const handleEditFloorClick = () => {
+    setIsIsOpenFloorForm(true);
+  };
   const handleDeleteClick = async (room) => {
     const confirm = window.confirm("Bạn có chắc chắn muốn xóa Tầng này?");
     if (!confirm) return;
@@ -234,31 +243,47 @@ export const Floor = () => {
         toast.success("Xóa tầng thành công!");
         fetchFloorRoomsData();
       } else {
-        toast.error("Xóa loại tin thất bại!");
+        toast.error("Xóa tầng thất bại!");
       }
     } catch (err) {
-      toast.error("Xóa tòa nhà thất bại!", err);
+      toast.error("Xóa tầng thất bại!", err);
     }
   };
+
+  const handleRowClick = (row) => {
+    navigate(ROUTES.ADMIN + ROUTES.ROOM_DETAIL.replace(":id", row.original.id));
+  };
+
   return (
     <>
       <Card className="col-span-2 bg-light-blue-bg p-4 rounded-xl  text-center lg:col-span-1 lg:p-4">
-        <CardHeader className={"p-0 flex items-center gap-2 border-b"}>
-          <IoArrowBack
-            size={20}
-            className="text-gray-800 hover:text-red-primary cursor-pointer"
-            onClick={() => navigate(-1)}
-          />
-          <Link
-            href={() => navigate("/admin/buildings/" + data?.building.id)}
+        <CardHeader
+          className={"p-0 flex items-center justify-between gap-2 border-b"}
+        >
+          <div className="flex items-center gap-2">
+            <div
+              className="flex cursor-pointer group items-center gap-2 hover:text-primary"
+              onClick={() => navigate(-1)}
+            >
+              <IoArrowBack
+                size={20}
+                className="text-gray-800 group-hover:text-red-primary cursor-pointer"
+              />
+              <h2 className="text-lg font-semibold group-hover:text-red-primary">
+                {data?.building?.name + " /"}
+              </h2>
+            </div>
+            <h2 className="text-lg font-semibold">{data?.name}</h2>
+          </div>
+          <Button
+            className="bg-primary text-white flex items-center gap-2"
+            onClick={handleEditFloorClick}
           >
-            <h2 className="text-lg font-semibold hover:text-red-primary">{data?.building?.name + " /"}</h2>
-          </Link>
-          <h2 className="text-lg font-semibold">{data?.name }</h2>
+            <LuPencilLine />
+            <span>Chỉnh sửa</span>
+          </Button>
         </CardHeader>
         <CardContent className="p-0">
-    
-
           <div className="flex flex-col justify-start mx-auto h-56">
             <p className="text-md font-semibold">Sơ đồ mặt bằng: </p>
 
@@ -269,22 +294,28 @@ export const Floor = () => {
             />
           </div>
 
-
-          <div className="flex items-center gap-2 mt-3 mb-3">
-            <p className="text-md font-semibold">Mô tả: </p>
-            <p className="italic">
-              {(!data?.description || data?.description === "") &&
-              data?.description
-                ? data?.description
-                : "Chưa có"}
-            </p>
+          <div
+            className={`flex  ${
+              data?.description && data?.description !== ""
+                ? "items-start h-fit"
+                : "items-center h-9"
+            }  gap-2 mb-3 mt-4`}
+          >
+            <p className="text-md font-semibold w-fit flex-shrink-0">Mô tả: </p>
+            {data?.description && data?.description !== "" ? (
+              <p
+                className=" ql-editor h-fit p-0 text-gray-600"
+                dangerouslySetInnerHTML={{ __html: data?.description }}
+              />
+            ) : (
+              <p className=" text-italic p-0 text-gray-600">Chưa có</p>
+            )}
           </div>
-     
 
           <div className="flex items-start justify-between mt-3 mb-3">
             <div className="flex items-center gap-2">
-              <p className="text-md font-semibold">Số phòng: </p>
-              <p className="">{roomsData?.length}</p>
+              <p className="text-md font-semibold">Danh sách phòng ban: </p>
+              <p className="">({roomsData?.length} phòng)</p>
             </div>
             <Button
               onClick={() => setIsDialogOpen(true)}
@@ -300,6 +331,7 @@ export const Floor = () => {
             page={page}
             columns={columns}
             setPage={setPage}
+            onRowClick={handleRowClick}
           />
         </CardContent>
       </Card>
@@ -308,10 +340,16 @@ export const Floor = () => {
         setOpen={setIsDialogOpen}
         data={selectedRoom}
         fetchData={fetchFloorRoomsData}
-        floorData = {{
+        floorData={{
           floorId: floorId,
-          buildingId: buildingId
+          buildingId: buildingId,
         }}
+      />
+      <FloorForm
+        open={isOpenFloorForm}
+        setOpen={setIsIsOpenFloorForm}
+        data={data}
+        fetchData={fetchData}
       />
     </>
   );

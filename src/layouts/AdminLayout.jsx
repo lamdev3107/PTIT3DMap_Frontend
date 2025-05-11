@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 // import { AdminHeader } from "./AdminHeader";
-import { Navigate, Outlet, Route } from "react-router-dom";
+import { Navigate, Outlet, Route, useNavigate } from "react-router-dom";
 import {
   SidebarInset,
   SidebarProvider,
@@ -14,14 +14,22 @@ import { ROUTES } from "@/utils/constants";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Toaster } from "react-hot-toast";
+import { Login } from "@/pages/admin/Login";
 // import { ROUTES } from "@/utils/constants";
 
 export const AdminLayout = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const handleLogout = () => {
     logout();
   };
-  return user ? (
+  useEffect(() => {
+    if(!user){
+      navigate(`${ROUTES.ADMIN}${ROUTES.LOGIN}`);
+    }
+  }, [user]);
+  return(
+   user ? (
     <SidebarProvider className={`w-screen h-screen `}>
       <AdminSidebar />
       <SidebarInset>
@@ -65,6 +73,9 @@ export const AdminLayout = () => {
       />
     </SidebarProvider>
   ) : (
-    <Navigate to={ROUTES.LOGIN} />
-  );
+    // <Navigate to={`${ROUTES.ADMIN}${ROUTES.LOGIN}`} />
+    <Login />
+    // <div>DITMEMA</div>
+  )
+)
 };

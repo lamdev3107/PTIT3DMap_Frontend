@@ -61,7 +61,7 @@ export const BuildingList = () => {
         import.meta.env.VITE_SERVER_URL + "/buildings?" + searchParam
       );
       const data = response.data;
-      setData(data.data);
+      setData([...data.data].reverse());
       setPageCount(data.pagination.totalPages);
     } catch (err) {
       toast.error("Lấy dữ liệu thất bại!");
@@ -249,6 +249,20 @@ export const BuildingList = () => {
       toast.error("Xóa tòa nhà thất bại!", err);
     }
   };
+
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter") {
+      event.target.blur();
+      fetchData();
+    }
+  };
+
+  const handleRowClick = (row) => {
+    console.log("row", row);
+    navigate(
+      ROUTES.ADMIN + ROUTES.BUILDING_DETAIL.replace(":id", row.original.id)
+    );
+  };
   return (
     <>
       <Card className="col-span-2 bg-light-blue-bg p-4 rounded-xl  text-center lg:col-span-1 lg:p-4">
@@ -262,21 +276,20 @@ export const BuildingList = () => {
             <div className="flex items-center gap-2">
               <div className="relative py-1">
                 <Input
-                  // disabled={searchBy.value === ""}
                   placeholder={`Tìm kiếm tòa nhà/CSVC...`}
                   value={searchValue}
                   onChange={(event) => {
                     setSearchValue(event.target.value);
                   }}
-                  className="max-w-sm min-w-72 bg-white "
+                  onKeyDown={handleKeyDown}
+                  className="max-w-sm min-w-72 bg-white"
                 />
                 <LuSearch
                   onClick={() => {
-                    // setSearchValue("");
                     fetchData();
                   }}
                   size={19}
-                  className="absolute text-gray-400 hover:text-black cursor-pointer transition-all duration-200 ease-out top-[calc(50%)] -translate-y-[calc(50%)] right-4 "
+                  className="absolute text-gray-400 hover:text-black cursor-pointer transition-all duration-200 ease-out top-[calc(50%)] -translate-y-[calc(50%)] right-4"
                 />
               </div>
               <Button
@@ -302,6 +315,7 @@ export const BuildingList = () => {
             page={page}
             columns={columns}
             setPage={setPage}
+            onRowClick={handleRowClick}
           />
         </CardContent>
       </Card>

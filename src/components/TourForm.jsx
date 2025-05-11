@@ -19,12 +19,21 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import axios from "axios";
+import base64ToFile from "@/utils/base64ToFile";
 // import "./index.css";
 
-export default function TourForm({ open, data = null, setOpen }) {
+export default function TourForm({
+  roomId = null,
+  data = null,
+  open,
+  setOpen,
+}) {
   const [scenes, setScenes] = useState([]);
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
   const [currentScene, setCurrentScene] = useState(null);
+  const [editingSceneName, setEditingSceneName] = useState(null);
+  const [newSceneName, setNewSceneName] = useState("");
 
   const [addingHotspot, setAddingHotspot] = useState(false);
   const [hotspots, setHotspots] = useState([]);
@@ -32,7 +41,6 @@ export default function TourForm({ open, data = null, setOpen }) {
   const [hotspotName, setHotspotName] = useState("");
   const [targetScene, setTargetScene] = useState("");
 
-  const [tourName, setTourName] = useState("");
   const [isViewing, setIsViewing] = useState(false);
   const [pannellumInstance, setPannellumInstance] = useState(null);
 
@@ -50,6 +58,14 @@ export default function TourForm({ open, data = null, setOpen }) {
   const [sceneConfigs, setSceneConfigs] = useState({});
 
   const onOpenChange = (isOpen) => {
+    console.log("heck dât", data);
+    if (data) {
+      setScenes(data);
+      setCurrentScene(data[0]?.title);
+      setCurrentSceneIndex(0);
+      setHotspots(data);
+      setAddingHotspot(false);
+    }
     if (!isOpen) {
       setScenes([]);
       setCurrentScene(null);
@@ -80,7 +96,7 @@ export default function TourForm({ open, data = null, setOpen }) {
 
       // Đảm bảo script đã được tải
       script.onload = () => {
-        console.log("Pannellum đã được tải");
+        // console.log("Pannellum đã được tải");
         initPannellum();
       };
 
@@ -94,13 +110,12 @@ export default function TourForm({ open, data = null, setOpen }) {
 
     loadPannellum();
   }, []);
-  // Cập nhật viewer khi scene hiện tại thay đổi
   useEffect(() => {
     if (scenes.length > 0 && window.pannellum) {
       initPannellum();
     }
   }, [currentSceneIndex, currentScene, scenes, isViewing, hotspots]);
-  console.log("Chekc hotspot", hotspots);
+  console.log("Check scene", scenes);
   // Khởi tạo Pannellum
   const initPannellum = () => {
     if (!window.pannellum || scenes.length === 0) return;
@@ -109,12 +124,10 @@ export default function TourForm({ open, data = null, setOpen }) {
     if (pannellumInstance) {
       pannellumInstance.destroy();
     }
-
     // Lấy container phù hợp dựa trên mode
     const container = isViewing
       ? pannellumContainerRef.current
       : editorViewerRef.current;
-
     if (!container) return;
 
     // Create a complete configuration with all scenes
@@ -130,29 +143,29 @@ export default function TourForm({ open, data = null, setOpen }) {
 
     scenes.forEach((scene) => {
       // Tạo cấu hình mặc định cho scene nếu chưa có
-      if (!sceneConfigs[scene.name]) {
+      if (!sceneConfigs[scene.title]) {
         setSceneConfigs((prev) => ({
           ...prev,
-          [scene.name]: {
-            hfov: 120,
-            minYaw: -150,
-            maxYaw: 150,
+          [scene.title]: {
+            minYaw: -180,
+            maxYaw: 180,
             minPitch: -100,
             maxPitch: 100,
+            hfov: 120,
           },
         }));
       }
 
       // Create a deep copy of the hotspots to prevent reference issues
-      const sceneHotspots = (hotspots[scene.name] || []).map((hotspot) => ({
+      const sceneHotspots = (hotspots[scene.title] || []).map((hotspot) => ({
         ...hotspot,
       }));
 
-      sceneConfig.scenes[scene.name] = {
-        title: scene.name,
-        panorama: scene.imageUrl,
+      sceneConfig.scenes[scene.title] = {
+        title: scene.title,
+        panorama: scene.panorama,
         hotSpots: sceneHotspots,
-        ...sceneConfigs[scene.name],
+        ...sceneConfigs[scene.title],
       };
     });
 
@@ -188,8 +201,8 @@ export default function TourForm({ open, data = null, setOpen }) {
       reader.onload = (e) => {
         const newScene = {
           id: Date.now() + Math.random().toString(36).substr(2, 9),
-          name: file.name.replace(/\.[^/.]+$/, ""),
-          imageUrl: e.target.result,
+          title: file.name.replace(/\.[^/.]+$/, ""),
+          panorama: e.target.result,
         };
 
         setScenes((prevScenes) => [...prevScenes, newScene]);
@@ -199,16 +212,109 @@ export default function TourForm({ open, data = null, setOpen }) {
           setCurrentSceneIndex(0);
         }
         if (!currentScene) {
-          setCurrentScene(newScene.name);
+          setCurrentScene(newScene.title);
         }
+
+        // Thêm cấu hình mặc định cho scene mới
+        setSceneConfigs((prev) => ({
+          ...prev,
+          [newScene.title]: {
+            hfov: 120,
+            minYaw: -180,
+            maxYaw: 180,
+            minPitch: -100,
+            maxPitch: 100,
+          },
+        }));
+
         setHotspots((prevHotspots) => ({
           ...prevHotspots,
-          [newScene.name]: prevHotspots[newScene.name] || [],
+          [newScene.title]: prevHotspots[newScene.title] || [],
         }));
       };
 
       reader.readAsDataURL(file);
     });
+  };
+
+  // Cập nhật hàm editSceneName để xử lý đúng việc đổi tên scene
+  const editSceneName = () => {
+    if (!newSceneName.trim() || !editingSceneName) return;
+
+    // Kiểm tra xem tên mới đã tồn tại chưa
+    const nameExists = scenes.some(
+      (scene) =>
+        scene.title === newSceneName && scene.title !== editingSceneName
+    );
+
+    if (nameExists) {
+      alert("Tên scene đã tồn tại. Vui lòng chọn tên khác.");
+      return;
+    }
+
+    // Cập nhật tên scene trong danh sách scenes
+    const updatedScenes = scenes.map((scene) => {
+      if (scene.title === editingSceneName) {
+        return {
+          ...scene,
+          title: newSceneName,
+        };
+      }
+      return scene;
+    });
+    setScenes(updatedScenes);
+
+    // Cập nhật hotspots với tên mới
+    if (hotspots[editingSceneName]) {
+      setHotspots((prev) => {
+        const newHotspots = { ...prev };
+        newHotspots[newSceneName] = newHotspots[editingSceneName];
+        delete newHotspots[editingSceneName];
+        return newHotspots;
+      });
+    }
+
+    // Cập nhật sceneConfigs với tên mới
+    if (sceneConfigs[editingSceneName]) {
+      setSceneConfigs((prev) => {
+        const newConfigs = { ...prev };
+        newConfigs[newSceneName] = newConfigs[editingSceneName];
+        delete newConfigs[editingSceneName];
+        return newConfigs;
+      });
+    }
+
+    // Cập nhật currentScene nếu đang chỉnh sửa scene hiện tại
+    if (currentScene === editingSceneName) {
+      setCurrentScene(newSceneName);
+    }
+
+    // Cập nhật các hotspot liên kết đến scene này
+    setHotspots((prev) => {
+      const updatedHotspots = { ...prev };
+
+      // Duyệt qua tất cả các scene
+      Object.keys(updatedHotspots).forEach((sceneName) => {
+        // Cập nhật các hotspot có sceneId trỏ đến scene đang được đổi tên
+        updatedHotspots[sceneName] = updatedHotspots[sceneName].map(
+          (hotspot) => {
+            if (
+              hotspot.type === "scene" &&
+              hotspot.sceneId === editingSceneName
+            ) {
+              return { ...hotspot, sceneId: newSceneName };
+            }
+            return hotspot;
+          }
+        );
+      });
+
+      return updatedHotspots;
+    });
+
+    // Reset editing state
+    setEditingSceneName(null);
+    setNewSceneName("");
   };
 
   // Hàm xóa scene
@@ -252,61 +358,50 @@ export default function TourForm({ open, data = null, setOpen }) {
     }));
   };
 
-  // Hàm xóa hotspot
-  const removeHotspot = (hotspotId) => {
-    setHotspots((prevHotspots) =>
-      prevHotspots.filter((h) => h.id !== hotspotId)
-    );
-
-    // Xóa hotspot khỏi Pannellum
-    if (pannellumInstance) {
-      pannellumInstance.removeHotSpot(hotspotId);
-    }
-  };
-
-  // Hàm cập nhật thuộc tính của hotspot
-  const updateHotspot = (id, property, value) => {
-    setHotspots((prevHotspots) =>
-      prevHotspots.map((h) => (h.id === id ? { ...h, [property]: value } : h))
-    );
-
-    // Cập nhật lại viewer nếu đổi tiêu đề
-    if (property === "title" && pannellumInstance) {
-      const hotspot = pannellumInstance
-        .getConfig()
-        .hotSpots.find((h) => h.id === id);
-      if (hotspot) {
-        hotspot.text = value;
-        pannellumInstance.removeHotSpot(id);
-        pannellumInstance.addHotSpot(hotspot);
-      }
-    }
-
-    // Cập nhật kiểu hotspot nếu thay đổi targetSceneId
-    if (property === "targetSceneId" && pannellumInstance) {
-      initPannellum(); // Tạo lại viewer với hotspot đã cập nhật
-    }
-  };
-
   // Hàm lưu tour
-  const saveTour = () => {
-    const tourData = {
-      name: tourName,
-      scenes,
-      hotspots,
-    };
+  const saveTour = async () => {
+    const formData = new FormData();
 
-    // Tạo file JSON và tải xuống
-    const dataStr = JSON.stringify(tourData);
-    const dataUri =
-      "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+    // Prepare scenes data in a more compact format
 
-    const exportFileDefaultName = `${tourName.replace(/\s+/g, "-")}.json`;
+    scenes.forEach((scene, i) => {
+      formData.append(`scenes[${i}][title]`, scene.title);
+      formData.append(`scenes[${i}][roomId]`, roomId);
+      formData.append(`scenes[${i}][panorama]`, base64ToFile(scene.panorama));
+    });
+    // Prepare hotspots data in a more compact format
+    const hotspotsData = {};
+    Object.keys(hotspots).forEach((sceneTitle) => {
+      hotspotsData[sceneTitle] = hotspots[sceneTitle].map((hotspot) => ({
+        text: hotspot.text,
+        type: hotspot.type,
+        pitch: hotspot.pitch,
+        yaw: hotspot.yaw,
+        sceneId: hotspot.sceneId || null,
+      }));
+    });
 
-    const linkElement = document.createElement("a");
-    linkElement.setAttribute("href", dataUri);
-    linkElement.setAttribute("download", exportFileDefaultName);
-    linkElement.click();
+    // Add hotspots data as a single JSON string
+    formData.append("hotspots", JSON.stringify(hotspotsData));
+
+    try {
+      const response = await axios.post(
+        import.meta.env.VITE_SERVER_URL + "/scenes",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          // Add timeout and max content length settings
+          timeout: 30000,
+          maxContentLength: 50 * 1024 * 1024, // 50MB limit
+        }
+      );
+      return response.data;
+    } catch (err) {
+      console.error("Error saving tour:", err);
+      throw err;
+    }
   };
 
   // Hàm bắt đầu chỉnh sửa hotspot
@@ -385,21 +480,28 @@ export default function TourForm({ open, data = null, setOpen }) {
   const handlePanoramaMouseMove = (e) => {
     if (!pannellumInstance) return;
 
-    // Lấy container của Pannellum
-    const container = pannellumInstance.getContainer();
-    const rect = container.getBoundingClientRect();
+    // Get mouse coordinates relative to the viewer
+    const mouseEvent = {
+      clientX: e.clientX,
+      clientY: e.clientY,
+    };
 
-    // Tính toán vị trí tương đối của chuột trong container
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    // Convert mouse coordinates to spherical coordinates
+    const coords = pannellumInstance.mouseEventToCoords(mouseEvent);
 
-    // Chuyển đổi tọa độ pixel sang tọa độ panorama
-    const coords = pannellumInstance.mouseEventToCoords(e);
     if (coords) {
-      const [yaw, pitch] = coords;
+      // Extract yaw and pitch from coordinates
+      let [yaw, pitch] = coords;
+
+      // Normalize yaw to range -180 to 180
+      yaw = ((yaw + 180) % 360) - 180;
+
+      // Clamp pitch to range -90 to 90
+      pitch = Math.max(-90, Math.min(90, pitch));
+
       setMousePosition({ pitch, yaw });
 
-      // Nếu đang di chuyển hotspot, cập nhật vị trí hotspot
+      // Update hotspot position if moving
       if (isMovingHotspot) {
         setHotspotPosition({ pitch, yaw });
       }
@@ -465,7 +567,7 @@ export default function TourForm({ open, data = null, setOpen }) {
         scenes: {
           [currentScene]: {
             title: currentScene,
-            panorama: scenes.find((s) => s.name === currentScene)?.imageUrl,
+            panorama: scenes.find((s) => s.title === currentScene)?.panorama,
             hotSpots: currentHotspots,
             ...sceneConfigs[currentScene],
             [key]: value,
@@ -518,9 +620,9 @@ export default function TourForm({ open, data = null, setOpen }) {
           )}
         </DialogHeader>
         <div className="overflow-auto h-[calc(95vh-85px)] px-5 pb-5 ">
-          <div className="flex space-x-2 text-white ">
+          <div className="flex space-x-2 text-white my-3 ">
             <button
-              onClick={saveTour}
+              onClick={() => saveTour()}
               className="flex items-center bg-indigo-500 hover:bg-indigo-600 px-4 py-2 rounded"
             >
               <Save className="w-5 h-5 mr-2" />
@@ -539,19 +641,6 @@ export default function TourForm({ open, data = null, setOpen }) {
             <>
               <div className="bg-white  mb-6">
                 <div className="mb-4">
-                  <label className="block text-md font-semibold text-gray-700 mb-2">
-                    Tên Tour:
-                  </label>
-                  <input
-                    type="text"
-                    value={tourName}
-                    placeholder="Nhập tên Tour 360"
-                    onChange={(e) => setTourName(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:border-indigo-500"
-                  />
-                </div>
-
-                <div className="mb-4">
                   <h2 className="text-md font-semibold mb-2">
                     Dánh sách scene ({scenes.length})
                   </h2>
@@ -560,23 +649,70 @@ export default function TourForm({ open, data = null, setOpen }) {
                       <div
                         key={scene.id}
                         className={`relative w-40 h-40 border-2 rounded-lg overflow-hidden cursor-pointer ${
-                          currentScene === scene.name
+                          currentScene === scene.title
                             ? "border-indigo-600"
                             : "border-gray-300"
                         }`}
                         onClick={() => {
                           setCurrentSceneIndex(index);
-                          setCurrentScene(scene.name);
+                          setCurrentScene(scene.title);
                         }}
                       >
                         <img
-                          src={scene.imageUrl}
-                          alt={scene.name}
+                          src={scene.panorama}
+                          alt={scene.title}
                           className="w-full h-full object-cover"
                         />
-                        <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white p-1 text-xs truncate">
-                          {scene.name}
-                        </div>
+
+                        {/* Hiển thị form chỉnh sửa tên nếu đang edit scene này */}
+                        {editingSceneName === scene.title ? (
+                          <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-90 p-1 flex items-center">
+                            <input
+                              type="text"
+                              value={newSceneName}
+                              onChange={(e) => setNewSceneName(e.target.value)}
+                              className="w-full text-white bg-transparent border-b border-gray-400 text-xs focus:outline-none"
+                              onClick={(e) => e.stopPropagation()}
+                              autoFocus
+                            />
+                            <button
+                              className="ml-1 text-green-400 hover:text-green-300"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                editSceneName();
+                              }}
+                            >
+                              ✓
+                            </button>
+                            <button
+                              className="ml-1 text-red-400 hover:text-red-300"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Cancel editing and reset state
+                                setEditingSceneName(null);
+                                setNewSceneName("");
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white p-1 text-xs truncate flex justify-between items-center">
+                            <span>{scene.title}</span>
+                            <button
+                              className="text-blue-300 hover:text-blue-200"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Start editing scene name and store current name
+                                setEditingSceneName(scene.title);
+                                setNewSceneName(scene.title);
+                              }}
+                            >
+                              <Edit className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
+
                         <button
                           className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                           onClick={(e) => {
@@ -609,8 +745,8 @@ export default function TourForm({ open, data = null, setOpen }) {
               </div>
 
               {scenes.length > 0 && (
-                <div className="grid grid-cols-1 lg:grid-cols-8 gap-5">
-                  <div className="lg:col-span-6 bg-white rounded-lg border p-4">
+                <div className="grid grid-cols-1 lg:grid-cols-8 gap-3">
+                  <div className="lg:col-span-8 bg-white rounded-lg border p-4">
                     <div className="flex justify-between items-center mb-4">
                       <h2 className="text-md font-semibold">
                         Preview cảnh: {currentScene}
@@ -647,7 +783,7 @@ export default function TourForm({ open, data = null, setOpen }) {
                     </div>
 
                     {/* Thêm phần cấu hình Pannellum */}
-                    <div className="mt-4 space-y-4">
+                    {/* <div className="mt-4 space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Góc nhìn ngang (HFOV):{" "}
@@ -667,13 +803,13 @@ export default function TourForm({ open, data = null, setOpen }) {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Giới hạn trái (Min Yaw):{" "}
-                          {sceneConfigs[currentScene]?.minYaw || -150}°
+                          {sceneConfigs[currentScene]?.minYaw || -180}°
                         </label>
                         <input
                           type="range"
                           min="-180"
                           max="0"
-                          value={sceneConfigs[currentScene]?.minYaw || -150}
+                          value={sceneConfigs[currentScene]?.minYaw || -180}
                           onChange={(e) =>
                             updateSceneConfig(
                               "minYaw",
@@ -686,13 +822,13 @@ export default function TourForm({ open, data = null, setOpen }) {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Giới hạn phải (Max Yaw):{" "}
-                          {sceneConfigs[currentScene]?.maxYaw || 150}°
+                          {sceneConfigs[currentScene]?.maxYaw || 180}°
                         </label>
                         <input
                           type="range"
                           min="0"
                           max="180"
-                          value={sceneConfigs[currentScene]?.maxYaw || 150}
+                          value={sceneConfigs[currentScene]?.maxYaw || 180}
                           onChange={(e) =>
                             updateSceneConfig(
                               "maxYaw",
@@ -740,10 +876,11 @@ export default function TourForm({ open, data = null, setOpen }) {
                           className="w-full"
                         />
                       </div>
-                    </div>
+                    </div> */}
                   </div>
 
-                  <div className="lg:col-span-2 flex justify-center">
+                  {/* Hotspot editor  */}
+                  {/* <div className="lg:col-span-2 p-3 border rounded-md flex justify-center">
                     <Tabs defaultValue="hotspots" className="w-full mx-auto">
                       <TabsList className="w-full">
                         <TabsTrigger value="hotspots">
@@ -755,8 +892,8 @@ export default function TourForm({ open, data = null, setOpen }) {
                       </TabsList>
 
                       <TabsContent value="hotspots">
-                        {currentScene && hotspots[currentScene]?.length > 0 && (
-                          <div className="space-y-4">
+                        {currentScene && hotspots[currentScene]?.length > 0 ?
+                         (<div className="space-y-4">
                             {hotspots[currentScene].map((hotspot, index) => (
                               <div
                                 key={index}
@@ -809,7 +946,11 @@ export default function TourForm({ open, data = null, setOpen }) {
                               </div>
                             ))}
                           </div>
-                        )}
+                        ) : 
+                          <div className="space-y-4">
+                            <p>Không có hotspot nào trong scene này.</p>
+                          </div>
+                        }
                       </TabsContent>
 
                       <TabsContent value="hotspot editor">
@@ -852,7 +993,6 @@ export default function TourForm({ open, data = null, setOpen }) {
                                   <option value="scene">Liên kết scene</option>
                                 </select>
                               </div>
-                              {console.log("Chec targetSCene", targetScene)}
                               {hotspotType == "scene" && (
                                 <div>
                                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -868,14 +1008,14 @@ export default function TourForm({ open, data = null, setOpen }) {
                                     <option value="">Chọn scene</option>
                                     {scenes
                                       .filter(
-                                        (scene) => scene.name !== currentScene
+                                        (scene) => scene.title !== currentScene
                                       )
                                       .map((scene) => (
                                         <option
                                           key={scene.id}
-                                          value={scene.name}
+                                          value={scene.title}
                                         >
-                                          {scene.name}
+                                          {scene.title}
                                         </option>
                                       ))}
                                   </select>
@@ -943,14 +1083,14 @@ export default function TourForm({ open, data = null, setOpen }) {
                         )}
                       </TabsContent>
                     </Tabs>
-                  </div>
+                  </div> */}
                 </div>
               )}
             </>
           ) : (
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">{tourName} Chế độ xem</h2>
+            <div className="bg-white rounded-lg shadow-md">
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-xl font-semibold">Chế độ xem</h2>
                 <div className="flex flex-wrap gap-2">
                   {scenes.map((scene, index) => (
                     <button
@@ -962,18 +1102,18 @@ export default function TourForm({ open, data = null, setOpen }) {
                           : "bg-gray-200 hover:bg-gray-300"
                       }`}
                     >
-                      {scene.name}
+                      {scene.title}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div className="relative w-full h-full md:h-screen bg-black rounded overflow-hidden">
+              <div className="relative w-full h-[65vh] bg-black rounded overflow-hidden">
                 {scenes[currentSceneIndex] && (
                   <div
                     id="pannellum-container"
                     ref={pannellumContainerRef}
-                    className="w-full h-full"
+                    className=""
                   ></div>
                 )}
               </div>
