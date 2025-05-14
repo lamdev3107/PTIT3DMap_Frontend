@@ -1,167 +1,210 @@
 import React, { useState, useEffect } from "react";
 import { Search, X, Building, DoorClosed } from "lucide-react";
-import { BUILDINGS } from "./MainMap";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
 import logo from "@/assets/logo.png";
+import { RiLayoutGridFill } from "react-icons/ri";
+import { Button } from "./ui/button";
+import useDebounce from "@/hooks/useDebounce";
+import { useApp } from "@/provider/AppProvider";
 
-const Navbar = ({ onSearch, onSelectBuilding, onSelectRoom }) => {
+const Navbar = ({ setOpenRoomCategory }) => {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
-  const [query, setQuery] = useState("");
+  const [searchValue, setSearchValue] = useState("");
+  const { selectedRoom, setSelectedRoom } = useApp();
+  const debouncedValue = useDebounce(searchValue, 500);
   const [results, setResults] = useState([]);
-
-  useEffect(() => {
-    if (query.length > 0) {
-      const searchResults = [];
-
-      // Search buildings
-      BUILDINGS.forEach((building) => {
-        if (building.name.toLowerCase().includes(query.toLowerCase())) {
-          searchResults.push({
-            id: building.id,
-            name: building.name,
-            type: "building",
-          });
-        }
-
-        // Search rooms inside buildings
-        if (building.floors) {
-          building.floors.forEach((floor) => {
-            floor.rooms.forEach((room) => {
-              if (room.name.toLowerCase().includes(query.toLowerCase())) {
-                searchResults.push({
-                  id: room.id,
-                  name: room.name,
-                  type: "room",
-                  buildingId: building.id,
-                  floorLevel: floor.level,
-                });
-              }
-            });
-          });
-        }
-      });
-
-      setResults(searchResults);
-    } else {
-      setResults([]);
+  const navigate = useNavigate();
+  const fetchData = async (query) => {
+    const searchValueParams = {
+      name: query,
+    };
+    try {
+      let searchParam = new URLSearchParams(searchValueParams).toString();
+      const response = await fetch(
+        import.meta.env.VITE_SERVER_URL + "/rooms?" + searchParam
+      );
+      let data = await response.json();
+      console.log("check data", data.data);
+      data = data?.data;
+      if (data) {
+        setResults(data);
+      }
+    } catch (err) {
+      console.error(err);
     }
-  }, [query]);
-
-  const handleSelectResult = (result) => {
-    if (result.type === "building") {
-      onSelectBuilding(result.id);
-    } else if (
-      result.type === "room" &&
-      result.buildingId &&
-      result.floorLevel !== undefined &&
-      onSelectRoom
-    ) {
-      onSelectRoom(result.buildingId, result.id, result.floorLevel);
-    }
-
-    setQuery("");
-    setIsSearchExpanded(false);
   };
 
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter") {
+      event.target.blur();
+      fetchData();
+    }
+  };
+
+  const onBlurSearch = () => {
+    setTimeout(() => {
+      setIsSearchExpanded(false);
+      setSearchValue("");
+      setResults([]);
+    }, 200);
+  };
+
+  useEffect(() => {
+    if (debouncedValue) {
+      fetchData(debouncedValue);
+    }
+  }, [debouncedValue]);
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 px-4 py-3">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <Link
-              to={ROUTES.HOME}
-              className="text-2xl text-red-primary flex items-center gap-4 font-bold text-gradient"
+    <header className="fixed top-0 left-0 right-0 z-40 px-12 py-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <Link
+            to={ROUTES.HOME}
+            className="text-2xl text-red-primary flex items-center gap-4 font-bold text-gradient"
+          >
+            <img src={logo} alt="" className="h-12" />
+            PTIT 3D MAP
+          </Link>
+        </div>
+
+        <div className="flex items-center space-x-4">
+          {/* Search  */}
+          <div className="relative z-50">
+            <div
+              className={`bg-white  shadow-md flex items-center transition-all duration-300 ${
+                isSearchExpanded
+                  ? "w-80 rounded-xl hidden"
+                  : "w-12 rounded-full hover:bg-red-primary"
+              } h-12 z-50`}
             >
-              <img src={logo} alt="" className="h-12" />
-              PTIT 3D MAP
-            </Link>
-          </div>
-
-          <div className="flex items-center space-x-4">
-            <div className="relative">
               <div
-                className={`bg-white shadow-md flex items-center rounded-full transition-all duration-300 ${
-                  isSearchExpanded ? "w-64" : "w-10"
-                } h-10`}
+                className="flex group cursor-pointer items-center justify-center w-10 h-10"
+                onClick={() => setIsSearchExpanded((prev) => !prev)}
               >
-                <div
-                  className="flex items-center justify-center w-10 h-10"
-                  onClick={() => setIsSearchExpanded((prev) => !prev)}
-                >
-                  <Search className="h-4 w-4 text-gray-500" />
-                </div>
-
-                {isSearchExpanded && (
-                  <>
-                    <input
-                      type="text"
-                      placeholder="Tìm kiếm phòng ban..."
-                      className="w-full bg-transparent  border-none focus:outline-none text-foreground pr-3"
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      autoFocus
-                    />
-                    {query && (
-                      <button
-                        onClick={() => {
-                          setQuery("");
-                        }}
-                        className="p-1 mr-2 rounded-full hover:bg-gray-200/20"
-                      >
-                        <X className="h-4 w-4 text-gray-400" />
-                      </button>
-                    )}
-                  </>
-                )}
+                <Search
+                  size={16}
+                  className={`font-bold translate-x-0.5 text-red-primary ${
+                    !isSearchExpanded && "group-hover:text-white"
+                  }`}
+                />
               </div>
 
-              {isSearchExpanded && results.length > 0 && (
-                <div className="absolute top-full right-0  rounded-xl overflow-hidden shadow-lg max-h-60 overflow-y-auto">
-                  {results.map((result) => (
+              {isSearchExpanded && (
+                <>
+                  <input
+                    type="text"
+                    onBlur={onBlurSearch}
+                    placeholder="Tìm kiếm phòng ban..."
+                    className="w-full relative z-20 bg-transparent border-none focus:outline-none text-foreground pr-3"
+                    value={searchValue}
+                    onKeyDown={handleKeyDown}
+                    onChange={(e) => setSearchValue(e.target.value)}
+                    autoFocus
+                  />
+                  {searchValue && (
                     <button
-                      key={result.id}
-                      onClick={() => handleSelectResult(result)}
-                      className="w-full text-left px-3 py-2 hover:bg-white/10 transition-colors flex items-center"
+                      onClick={() => {
+                        setSearchValue("");
+                      }}
+                      className="p-1 mr-2 rounded-full hover:bg-gray-200/20"
                     >
-                      {result.type === "building" ? (
-                        <Building className="h-4 w-4 mr-3" />
-                      ) : (
-                        <DoorClosed className="h-4 w-4 mr-3" />
-                      )}
-                      <div>
-                        <span>{result.name}</span>
-                        {result.type === "room" && (
-                          <p className="text-xs text-gray-400">
-                            {BUILDINGS.find((b) => b.id === result.buildingId)
-                              ?.name || ""}{" "}
-                            - Tầng {result.floorLevel}
-                          </p>
-                        )}
-                      </div>
+                      <X className="h-4 w-4 text-gray-400" />
                     </button>
-                  ))}
-                </div>
+                  )}
+                </>
               )}
             </div>
+            {isSearchExpanded && (
+              <div>
+                <div
+                  className="fixed inset-0 bg-black/50 z-10"
+                  onClick={onBlurSearch}
+                ></div>
+                <div
+                  className={`bg-white relative  shadow-md flex items-center transition-all duration-300 ${
+                    isSearchExpanded
+                      ? "w-80 rounded-xl "
+                      : "w-12 rounded-full hover:bg-red-primary"
+                  } h-12 z-50`}
+                >
+                  <div
+                    className="flex group cursor-pointer items-center justify-center w-10 h-10"
+                    onClick={() => setIsSearchExpanded((prev) => !prev)}
+                  >
+                    <Search
+                      size={16}
+                      className={`font-bold translate-x-0.5 text-red-primary ${
+                        !isSearchExpanded && "group-hover:text-white"
+                      }`}
+                    />
+                  </div>
 
-            <nav className="hidden md:flex">
-              <ul className="flex space-x-3">
-                {["Bản đồ", "Tòa nhà", "Hướng dẫn", "Giới thiệu"].map(
-                  (item) => (
-                    <li key={item}>
-                      <a
-                        href="#"
-                        className="px-4 py-2.5 rounded-full  shadow-md text-color-text bg-white hover:bg-red-primary hover:text-white transition-all duration-300"
+                  {isSearchExpanded && (
+                    <>
+                      <input
+                        type="text"
+                        onBlur={onBlurSearch}
+                        placeholder="Tìm kiếm phòng ban..."
+                        className="w-full relative z-20 bg-transparent border-none focus:outline-none text-foreground pr-3"
+                        value={searchValue}
+                        onKeyDown={handleKeyDown}
+                        onChange={(e) => setSearchValue(e.target.value)}
+                        autoFocus
+                      />
+                      {searchValue && (
+                        <button
+                          onClick={() => {
+                            setSearchValue("");
+                          }}
+                          className="p-1 mr-2 rounded-full hover:bg-gray-200/20"
+                        >
+                          <X className="h-4 w-4 text-gray-400" />
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+                {results.length > 0 && (
+                  <div className="absolute w-fit top-full right-0 left-0 bg-white rounded-xl overflow-hidden shadow-lg max-h-60 overflow-y-auto z-50">
+                    {results.map((result) => (
+                      <button
+                        onClick={() => {
+                          navigate(
+                            ROUTES.BUILDING_DETAIL.replace(
+                              ":id",
+                              result.floor.buildingId
+                            )
+                          );
+                          setSelectedRoom(result);
+                        }}
+                        key={result.id}
+                        className="w-full text-left px-3 py-2 hover:bg-gray-100 transition-colors flex items-center"
                       >
-                        {item}
-                      </a>
-                    </li>
-                  )
+                        <DoorClosed className="flex-shrink-0 h-4 w-4 mr-3" />
+                        <span>
+                          {result.name +
+                            " (" +
+                            result?.floor?.building?.name +
+                            ")"}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 )}
-              </ul>
-            </nav>
+              </div>
+            )}
           </div>
+
+          {/* Category  */}
+          <button
+            onClick={() => setOpenRoomCategory(true)}
+            className="cursor-pointer px-5 py-3.5 text-sm flex items-center gap-2 text-red-700 rounded-2xl shadow-md text-color-text bg-white hover:bg-red-primary hover:text-white transition-all duration-300"
+          >
+            <RiLayoutGridFill />
+            <span>Danh mục phòng ban</span>
+          </button>
         </div>
       </div>
     </header>

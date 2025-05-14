@@ -15,6 +15,7 @@ export function DataTable({
   setPage,
   search = null,
   table = table,
+  onRowClick = null,
 }) {
   return (
     <div className="w-full ">
@@ -28,6 +29,7 @@ export function DataTable({
                   className="hover:bg-gray-100"
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  onClick={() => onRowClick(row)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell className="px-2" key={cell.id}>

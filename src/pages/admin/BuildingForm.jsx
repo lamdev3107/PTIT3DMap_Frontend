@@ -17,19 +17,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import axios from "axios";
-import { Loader2, Trash, X } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -209,7 +203,7 @@ export function BuildingForm({ open, data = null, setOpen, fetchData }) {
               />
 
               {/* Mô tả  */}
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name="description"
                 render={({ field }) => (
@@ -232,7 +226,9 @@ export function BuildingForm({ open, data = null, setOpen, fetchData }) {
                     <FormMessage className="text-red-500 font-normal italic" />
                   </FormItem>
                 )}
-              />
+              /> */}
+
+              {/* Model 3D  */}
               <FormField
                 control={form.control}
                 name="model"
@@ -242,7 +238,11 @@ export function BuildingForm({ open, data = null, setOpen, fetchData }) {
                       File Model
                       <span className="text-secondary ml-1.5">(*)</span>
                     </FormLabel>
-                    <div className="h-fit p2 text-sm rounded-md  w-full flex items-center relative">
+                    <div
+                      className={`${
+                        glbURL ? "h-[300px]" : "h-fit"
+                      } p2 text-sm rounded-md  w-full flex items-center relative `}
+                    >
                       {!glbURL ? (
                         <FormControl>
                           <Input
@@ -263,8 +263,8 @@ export function BuildingForm({ open, data = null, setOpen, fetchData }) {
                           />
                         </FormControl>
                       ) : (
-                        <div className="     w-full border rounded-md relative">
-                          <Canvas className="w-[200px]">
+                        <div className=" h-full  w-full border rounded-md relative">
+                          <Canvas className="w-full h-full">
                             <Suspense>
                               <ambientLight intensity={0.5} />
                               <directionalLight
@@ -275,9 +275,10 @@ export function BuildingForm({ open, data = null, setOpen, fetchData }) {
                                 shadow-mapSize-width={1024}
                                 shadow-mapSize-height={1024}
                               />
-                              <OrbitControls />
+                              <OrbitControls maxDistance={5} minDistance={2} />
                               <BuildingModel
                                 position={[0, 0, 0]}
+                                scale={[1, 1, 1]}
                                 linkFile={glbURL}
                               />
                             </Suspense>
@@ -296,7 +297,6 @@ export function BuildingForm({ open, data = null, setOpen, fetchData }) {
                   </FormItem>
                 )}
               />
-              
             </div>
             {/* Nút Submit */}
             <DialogFooter className={"pt-5"}>

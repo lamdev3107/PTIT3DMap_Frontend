@@ -1,0 +1,23 @@
+# Bỏ thư mục node_modules (đã được npm install trong Docker)
+node_modules
+
+# Bỏ thư mục build nếu có
+dist
+
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# IDE / hệ thống
+.vscode
+*.log
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dockerfile và cấu hình không cần đưa vào image
+Dockerfile
+docker-compose.yml
+.dockerignore

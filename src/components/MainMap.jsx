@@ -1,207 +1,28 @@
-import React, { useRef, useState, useEffect, useMemo } from "react";
+import React, { useRef, useState, useEffect, useMemo, Suspense } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { PerspectiveCamera, SheetProvider } from "@theatre/r3f";
 import { editable as e } from "@theatre/r3f";
+import * as THREE from "three";
 import {
-  OrbitControls,
-  Text,
   GizmoHelper,
   GizmoViewport,
-  CameraControls,
-  Html,
-  Billboard,
   Environment,
-  CameraShake,
+  GradientTexture,
 } from "@react-three/drei";
-import * as THREE from "three";
-import { BuildingModel } from "./BuildingModel";
-import { angleToRadian } from "@/utils/angleToRadian";
-import { FaExternalLinkAlt } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
-import { getProject } from "@theatre/core";
-import { BUILDINGS } from "@/utils/fakeData";
-import scrollSheet from "@/theatre/sheets/scrollSheet";
-import ScrollCameraController from "./ScrollCameraController";
-import { Background } from "./Background";
+import { useNavigate } from "react-router-dom";
+import { HOTSPOTS } from "@/utils/hotspotData";
+import mainsheet from "@/theatre/sheets/mainsheet";
+import Indicator from "./Indicator";
+import Hotspot from "./Hotspot";
+import { Button } from "@/components/ui/button";
+import { Home, RefreshCw } from "lucide-react";
 import { Model } from "./Model";
+import { ROUTES } from "@/utils/constants";
+import { BuildingList } from "./BuildingList";
+import { FaAngleRight } from "react-icons/fa";
+import { AnimatePresence } from "framer-motion";
 
 // Interactive Hotspot component styled like Panasonic CONNECT
-const Hotspot = ({id, position, data, color = "#4ECDC4", onClick }) => {
-  const [hovered, setHovered] = useState(false);
-  const [expanded, setExpanded] = useState(false);
-
-  // Handle hover with delay for smooth transition
-  useEffect(() => {
-    let timer;
-    if (hovered) {
-      timer = setTimeout(() => {
-        setExpanded(true);
-      }, 100);
-    } else {
-      timer = setTimeout(() => {
-        setExpanded(false);
-      }, 100);
-    }
-    return () => clearTimeout(timer);
-  }, [hovered]);
-  console.log("Check expanded", expanded)
-  console.log("Check hovered", hovered)
-  return (
-    <e.group theatreKey={`hotspot-${id}`} position={position}>
-      <Billboard
-        // visible={!hovered}
-        onPointerEnter={() => setHovered(true)}
-        onPointerLeave={() => setHovered(false)}
-        follow={true}
-      >
-        <Html
-          transform
-          distanceFactor={1.5}
-          occlude
-          position={[0, 0, 0]} 
-        >
-          <div 
-            onMouseEnter={() => {
-              setHovered(true)
-            }}
-            onMouseLeave={() => {
-              setHovered(false)
-            }}
-            onClick={onClick}
-            style={{
-              transformOrigin: "center",
-            }}
-            className={`
-              bg-white rounded-lg shadow-lg
-              flex justify-center items-center 
-              cursor-pointer relative overflow-hidden h-16
-              ${!expanded ? 'w-16 rotate-45 ' : 'animate-rotate-resize px-4'}
-             
-            `}
-          >
-           {
-             expanded?     <div
-             className={`flex gap-2 items-center`}
-           >
-             <h3
-               className="text-md text-gray-800 margin-0 font-bold"
-             >
-               {"Thông tin về tòa nhà " + id}
-             </h3>
-             <button
-               className="bg-slate-700 text-white rounded-full border-none flex justify-center items-center w-8 h-8 p-2"
-             >
-               →
-             </button>
-           </div> : 
-            <div 
-            className="-rotate-45 text-slate-800 text-4xl font-medium flex justify-center items-center w-full h-full"
-          >
-            +
-          </div>
-           }
-          </div>
-        </Html>
-      </Billboard>
-
-      {/* Information card on hover */}
-      {/* {hovered && ( */}
-        {/* <Html
-          occlude
-          position={[0, 0, 0]}
-          style={{
-            opacity: expanded ? 1 : 0,
-            transition: "all 0.3s ease-in-out",
-            pointerEvents: expanded ? "auto" : "none",
-            transform: `scale(${expanded ? 1 : 0.5}) translateX(${expanded ? 0 : -20}px)`,
-            transformOrigin: "center",
-            visibility: expanded ? "visible" : "hidden",
-            width: "fit-content",
-            pointerEvents: "auto",
-            transform: "translate(-50%, -50%)",
-            marginBottom: "0px",
-          }}
-          
-          distanceFactor={1.5}
-        >
-          <div
-            className="bg-white flex justify-between items-center mb-4 shadow-md rounded-lg p-4"
-            onMouseLeave={() => setHovered(false)}
-          >
-            <h3
-              className="text-md w-fit text-gray-800 margin-0 font-bold"
-            >
-              {"Thông tin về tòa nhà " + id}
-            </h3>
-            <button
-              className="bg-slate-700 text-white rounded-full border-none flex justify-center items-center w-8 h-8 p-2"
-            >
-              →
-            </button>
-          </div>
-        </Html> */}
-      {/* )} */}
-  </e.group>
-  );
-};
-
-const BuildingGroup = ({
-  position,
-  rotation,
-  color,
-  scale,
-  id,
-  name,
-  linkFile
-}) => {
-  const ref = useRef(null);
-  const [hover, setHover] = useState(false);
-  const [tooltipVisible, setTooltipVisible] = useState(false);
-  const navigate = useNavigate();
-  const buildingInfo = BUILDINGS.find((building) => building.id === id);
-
-  // Show tooltip with a small delay to prevent flickering
-  useEffect(() => {
-    let timer;
-    if (hover) {
-      timer = window.setTimeout(() => {
-        setTooltipVisible(true);
-      }, 200);
-    } else {
-      setTooltipVisible(false);
-    }
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [hover]);
-  return (
-    <>
-      <e.group
-        ref={ref}
-        theatreKey={`building-${id}`}
-        position={position}
-        onPointerOver={() => setHover(true)}
-        onPointerOut={() => setHover(false)}
-      >
-        <BuildingModel
-          linkFile={linkFile}
-          scale={scale}
-          rotation={rotation}
-          castShadow
-        />
-      </e.group>
-    
-      <Hotspot
-        id={id}
-        key={`hotspot-${id}-`}
-        position={position}
-        data={name}
-        color={color || "#4ECDC4"}
-        onClick={() => navigate("/detail-building")}
-      />
-    </>
-  );
-};
 
 const Ground = () => {
   return (
@@ -212,28 +33,80 @@ const Ground = () => {
       receiveShadow
     >
       <planeGeometry args={[20, 20]} />
-      <meshStandardMaterial color="#d1e0ee" roughness={1} metalness={0} />
+      <meshStandardMaterial color="#41435c" roughness={1} metalness={0} />
     </e.mesh>
   );
 };
 
-const Scene = ({ selectedBuilding, onSelectBuilding, sequence = null, scrollPosition }) => {
-  const { camera, mouse } = useThree();
-  const [isTourActive, setIsTourActive] = useState(false);
-  const [currentTourIndex, setCurrentTourIndex] = useState(-1);
-  const navigate = useNavigate();
+const SEQUENCE_LENGTH = 26;
+const Scene = ({ handleHotspotClick, resetCamera, zoomToPosition }) => {
+  const { camera } = useThree();
 
-  // Update sequence position based on scrollPosition prop
+  // Handle camera reset
   useEffect(() => {
-    if (sequence && scrollPosition !== undefined) {
-      const duration = sequence.length || 10; // Sequence duration in seconds
-      sequence.position = scrollPosition * duration;
+    if (resetCamera) {
+      // Reset camera to initial position directly
+      camera.position.set(0, 1.6, 15);
+      camera.rotation.set(0, 0, 0);
+      camera.updateProjectionMatrix();
     }
-  }, [scrollPosition, sequence]);
+  }, [resetCamera, camera]);
+
+  // Handle zoom to hotspot
+  useEffect(() => {
+    if (zoomToPosition) {
+      const targetPosition = [...zoomToPosition];
+      // Điều chỉnh vị trí để camera nhìn vào hotspot từ góc đẹp hơn
+      targetPosition[0] += 1; // Thêm offset X
+      targetPosition[1] += 1; // Thêm offset Y
+      targetPosition[2] += 3; // Thêm offset Z để camera không quá gần
+
+      // Tạo animation zoom
+      let startTime = null;
+      const duration = 1000; // 1 giây
+
+      const animate = (timestamp) => {
+        if (!startTime) startTime = timestamp;
+        const elapsed = timestamp - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        // Tính toán vị trí camera theo tiến trình
+        const startPos = new THREE.Vector3(
+          camera.position.x,
+          camera.position.y,
+          camera.position.z
+        );
+        const endPos = new THREE.Vector3(
+          targetPosition[0],
+          targetPosition[1],
+          targetPosition[2]
+        );
+        const newPos = new THREE.Vector3().lerpVectors(
+          startPos,
+          endPos,
+          progress
+        );
+
+        // Cập nhật vị trí camera
+        camera.position.copy(newPos);
+
+        // Nhìn vào vị trí hotspot
+        camera.lookAt(zoomToPosition[0], zoomToPosition[1], zoomToPosition[2]);
+        camera.updateProjectionMatrix();
+
+        // Tiếp tục animation nếu chưa hoàn thành
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      };
+
+      requestAnimationFrame(animate);
+    }
+  }, [zoomToPosition, camera]);
 
   return (
     <>
-      <ambientLight intensity={0.5} />
+      <ambientLight intensity={1} />
       <e.directionalLight
         theatreKey="directionalLight"
         position={[5, 5, 5]}
@@ -242,7 +115,7 @@ const Scene = ({ selectedBuilding, onSelectBuilding, sequence = null, scrollPosi
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
       />
-      <fog attach="fog" args={["#ecf4ff", 10, 25]} />
+      {/* <fog attach="fog" args={["#ecf4ff", 10, 35]} /> */}
       <group>
         <PerspectiveCamera
           theatreKey="Camera"
@@ -251,29 +124,37 @@ const Scene = ({ selectedBuilding, onSelectBuilding, sequence = null, scrollPosi
           makeDefault
         />
       </group>
-      <Environment preset="sunset" />
-      <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
+      <Environment>
+        <mesh position={[0, 0, -100]}>
+          <planeGeometry args={[500, 500]} />
+          <meshBasicMaterial>
+            <GradientTexture
+              attach="map"
+              stops={[0, 1]} // Gradient stops
+              colors={["#4a90e2", "#f39c12"]} // Blue to orange gradient
+            />
+          </meshBasicMaterial>
+        </mesh>
+      </Environment>
+      <GizmoHelper alignment="bottom-left" margin={[80, 80]}>
         <GizmoViewport labelColor="white" axisHeadScale={1} />
       </GizmoHelper>
       <Ground />
-      <Model scale={[1, 1, 1]} linkFile="./small_town.glb" />
-      {BUILDINGS.map((building) => (
-        <BuildingGroup
-          key={building.id}
-          id={building.id}
-          name={building.name}
-          rotation={building.rotation}
-          linkFile={building.linkFile}
-          position={building.position}
-          color={building.color}
-          scale={building.scale}
-          description={building.description}
-          isSelected={
-            building.id === selectedBuilding ||
-            (isTourActive && BUILDINGS[currentTourIndex].id === building.id)
-          }
-          onClick={onSelectBuilding}
-          camera={camera}
+      <e.group theatreKey="map">
+        <Model
+          // rotation
+          position={[0, 0, 0]}
+          linkFile={"/School.glb"}
+        />
+      </e.group>
+
+      {HOTSPOTS.map((hotspot) => (
+        <Hotspot
+          key={hotspot.id}
+          id={hotspot.id}
+          data={hotspot}
+          onClick={handleHotspotClick}
+          position={hotspot.position}
         />
       ))}
     </>
@@ -281,78 +162,227 @@ const Scene = ({ selectedBuilding, onSelectBuilding, sequence = null, scrollPosi
 };
 
 const MainMap = ({ selectedBuilding, onSelectBuilding }) => {
-  const sequence = scrollSheet.sequence;
+  const sequence = mainsheet.sequence;
+  const [openBuildingList, setOpenBuildingList] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
-  const [targetScrollPosition, setTargetScrollPosition] = useState(0);
-  const wheelSensitivity = 0.01; // Reduced sensitivity for smoother control
-  const dampingFactor = 0.05; // Controls how quickly the animation catches up to the target (lower = smoother but slower)
-  const containerRef = useRef(null);
+  const [currentSection, setCurrentSection] = useState(0);
+  const [sectionProgress, setSectionProgress] = useState(0);
+  const [resetTrigger, setResetTrigger] = useState(false);
+  const [zoomToPosition, setZoomToPosition] = useState(null);
+  const navigate = useNavigate();
+  const scrollSpeed = 0.002;
+  const damping = 0.04;
+  const currentRef = useRef(sequence.position);
+  const targetRef = useRef(currentRef.current);
+  const totalSections = 5;
 
-  // Handle wheel events to control the sequence
-  const handleWheel = (event) => {
-    // event.preventDefault();
-    // Calculate new target scroll position based on wheel delta
-    const delta = event.deltaY > 0 ? wheelSensitivity : -wheelSensitivity;
-    let newPosition = targetScrollPosition + delta;
-    console.log("Check delta", delta)
-    
-    // Clamp the value between 0 and 1
-    newPosition = Math.max(0, Math.min(1, newPosition));
-    
-    // Reset to beginning if we reach the end
-    if (newPosition >= 0.999) {
-      newPosition = 0;
-    }
-    
-    setTargetScrollPosition(newPosition);
+  const handleClickBuildingList = (time) => {
+    // Tính toán vị trí mục tiêu trong sequence
+    const targetPosition = time;
+
+    // Cập nhật targetRef để kích hoạt animation
+    targetRef.current = targetPosition;
+
+    // Tính toán section hiện tại dựa trên thời gian
+    const sectionSize = 1 / totalSections;
+    const newSection = Math.min(
+      totalSections - 1,
+      Math.floor(time / SEQUENCE_LENGTH / sectionSize)
+    );
+
+    // Tính toán progress trong section hiện tại
+    const progressInSection =
+      (time / SEQUENCE_LENGTH - newSection * sectionSize) / sectionSize;
+
+    // Cập nhật section tracking
+    setCurrentSection(newSection);
+    setSectionProgress(progressInSection);
   };
 
-  // Apply damping effect using requestAnimationFrame
-  useEffect(() => {
-    let animationFrameId;
-    
-    const updateScrollPosition = () => {
-      // Calculate the difference between current and target positions
-      const diff = targetScrollPosition - scrollPosition;
-      
-      // If the difference is very small, just set to target to avoid tiny endless animations
-      if (Math.abs(diff) < 0.001) {
-        setScrollPosition(targetScrollPosition);
-      } else {
-        // Apply damping - move a percentage of the way to the target each frame
-        setScrollPosition(scrollPosition + diff * dampingFactor);
-      }
-      
-      animationFrameId = requestAnimationFrame(updateScrollPosition);
-    };
-    
-    animationFrameId = requestAnimationFrame(updateScrollPosition);
-    
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [scrollPosition, targetScrollPosition, dampingFactor]);
+  // Add the missing handleHotspotClick function
+  // ... existing code ...
 
+  // Cuộn chuột → cập nhật targetRef
+  useEffect(() => {
+    const handleWheel = (e) => {
+      const direction = e.deltaY > 0 ? 1 : -1;
+      const sequenceLength = SEQUENCE_LENGTH;
+      let next = targetRef.current + direction * scrollSpeed * sequenceLength;
+
+      const normalizedPosition = next / SEQUENCE_LENGTH;
+
+      // Tính toán section hiện tại
+      const sectionSize = 1 / totalSections;
+      const newSection = Math.min(
+        totalSections - 1,
+        Math.floor(normalizedPosition / sectionSize)
+      );
+
+      // Tính toán progress trong section hiện tại
+      const progressInSection =
+        (normalizedPosition - newSection * sectionSize) / sectionSize;
+
+      // Cập nhật state
+      setCurrentSection(newSection);
+      setSectionProgress(progressInSection);
+
+      // loop
+      if (next > sequenceLength) {
+        next = 0;
+        handleResetCamera();
+      }
+      if (next < 0) {
+        next = 0;
+      }
+
+      targetRef.current = next;
+    };
+
+    containerRef.current.addEventListener("wheel", handleWheel, {
+      passive: true,
+    });
+    return () => {
+      if (containerRef.current) {
+        containerRef.current.removeEventListener("wheel", handleWheel);
+      }
+    };
+  }, [scrollSpeed]);
+
+  // Animation loop
+  useEffect(() => {
+    let frameId;
+
+    const animate = () => {
+      const current = currentRef.current;
+      const target = targetRef.current;
+      const next = current + (target - current) * damping;
+      currentRef.current = next;
+      sequence.position = next;
+      frameId = requestAnimationFrame(animate);
+    };
+
+    animate();
+    return () => cancelAnimationFrame(frameId);
+  }, [damping, sequence]);
+
+  // Function to handle direct navigation to a specific section
+  const handleSectionClick = (sectionIndex) => {
+    // Tính toán vị trí mục tiêu trong sequence
+    const sectionSize = 1 / totalSections;
+
+    // Tính toán vị trí giữa section để camera di chuyển đến
+    const targetPosition =
+      (sectionIndex * sectionSize + sectionSize * 0.1) * SEQUENCE_LENGTH;
+
+    // Cập nhật targetRef để kích hoạt animation
+    targetRef.current = targetPosition;
+
+    // Cập nhật section hiện tại
+    setCurrentSection(sectionIndex);
+
+    // Reset progress về đầu section
+    setSectionProgress(0.05);
+  };
+
+  // Function to reset camera position
+  const handleResetCamera = () => {
+    // Set reset trigger to true
+    setResetTrigger(true);
+
+    // Reset sequence position to 0
+    targetRef.current = 0;
+    currentRef.current = 0;
+    sequence.position = 0;
+
+    // Reset section tracking
+    setCurrentSection(0);
+    setSectionProgress(0);
+
+    // Reset trigger after a short delay
+    setTimeout(() => {
+      setResetTrigger(false);
+    }, 100);
+  };
+
+  // Add the missing handleHotspotClick function
+  const handleHotspotClick = (position, buildingId) => {
+    console.log("check buidling", buildingId);
+    // Set zoom position to trigger animation
+    setZoomToPosition(position);
+
+    // After animation completes, navigate to detail page
+    setTimeout(() => {
+      navigate(ROUTES.BUILDING_DETAIL.replace(":id", buildingId));
+    }, 1500); // Wait 1.2 seconds for animation to complete
+  };
+  const containerRef = useRef(null);
   return (
-    <div 
-      className="campus-canvas bg-gradient-to-b from-blue-50 to-indigo-100"
-      ref={containerRef}
-      onWheel={handleWheel}
-      style={{ width: '100%', height: '100%' }}
-    >
-      <Canvas shadows dpr={[1, 2]}>
-        <SheetProvider sheet={scrollSheet}>
-          <Scene
-            selectedBuilding={selectedBuilding}
-            onSelectBuilding={onSelectBuilding}
-            sequence={sequence}
-            scrollPosition={scrollPosition}
+    <div className="relative w-screen h-screen">
+      <div
+        ref={containerRef}
+        className="campus-canvas bg-gradient-to-b from-blue-50 to-indigo-100"
+        style={{ width: "100%", height: "100%" }}
+      >
+        <Canvas shadows dpr={[1, 2]}>
+          <Suspense fallback={null}>
+            <SheetProvider sheet={mainsheet}>
+              <Scene
+                selectedBuilding={selectedBuilding}
+                handleHotspotClick={handleHotspotClick}
+                sequence={sequence}
+                scrollPosition={scrollPosition}
+                resetCamera={resetTrigger}
+                zoomToPosition={zoomToPosition}
+              />
+            </SheetProvider>
+          </Suspense>
+        </Canvas>
+      </div>
+
+      {/* Progress Indicator */}
+      <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-10">
+        <Indicator
+          total={totalSections}
+          activeIndex={currentSection}
+          progress={sectionProgress}
+          onSectionClick={handleSectionClick}
+        />
+      </div>
+
+      {/* Reset Camera Button */}
+      <div className="absolute bottom-8 right-[88px] z-10">
+        <Button
+          onClick={handleResetCamera}
+          className="bg-red-primary text-white h-9 hover:bg-red-primary/70 rounded-full px-4 shadow-md"
+          title="Trở về vị trí đầu"
+        >
+          <RefreshCw className="h-5 w-5" />
+        </Button>
+      </div>
+
+      <div className="fixed bottom-8 left-8 z-20 flex items-center gap-3">
+        <p className="text-white drop-shadow-md text-sm">
+          Xem danh sách tòa nhà
+        </p>
+        <Button
+          onClick={() => {
+            setOpenBuildingList(true);
+          }}
+          className="rounded-full bg-white px-4 hover:bg-blue-50 h-9 text-red-primary hover:text-red-primary  "
+        >
+          <FaAngleRight className="h-6 w-6" />
+        </Button>
+      </div>
+      <AnimatePresence>
+        {openBuildingList && (
+          <BuildingList
+            onClose={() => setOpenBuildingList(false)}
+            onClick={handleClickBuildingList}
           />
-        </SheetProvider>
-      </Canvas>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
 export default MainMap;
-export { BUILDINGS };

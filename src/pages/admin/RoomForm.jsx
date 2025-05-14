@@ -1,5 +1,6 @@
 import { BuildingModel } from "@/components/BuildingModel";
 import { Combobox } from "@/components/Combobox";
+import { TextEditor } from "@/components/TextEditor/TextEditor";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,8 +20,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-
-import { Textarea } from "@/components/ui/textarea";
 import fileUploader, { deleteFirebaseItem } from "@/utils/fileUploader";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { OrbitControls } from "@react-three/drei";
@@ -77,13 +76,16 @@ export function RoomForm({ open, data = null, setOpen, fetchData, floorData = nu
   const [imgUploaded, setImgUploaded] = useState(null);
   const [isLoadingImg, setIsLoadingImg] = useState(false);
   const [uploadingProgress, setUploadingProgress] = useState(0);
-  const form = useForm({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
+  const defaultValues = useMemo(() => {
+    return {
       name: undefined,
       description: undefined,
-      roomId: undefined,
-    },
+      model: undefined,
+    };
+  }, []);
+  const form = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues
   });
 
   const fetchRoom = async () => {
@@ -102,19 +104,21 @@ export function RoomForm({ open, data = null, setOpen, fetchData, floorData = nu
         buildingId: res?.floor?.building?.id,
         model: res?.modelURL
       });
-      setImgUploaded(res.image);
+      setImgUploaded(res?.image);
       setNavigation({
-        label: res.navigation?.name || "Không chọn",
-        value: res.navigation?.id,
+        label: res?.navigation?.name || "Không chọn",
+        value: res?.navigation?.id,
       });
       setFloor({
-        label: res.floor?.name || "Không chọn",
-        value: res.floor?.id,
+        label: res?.floor?.name || "Không chọn",
+        value: res?.floor?.id,
       });
       setBuilding({
-        label: res.floor.building?.name || "Không chọn",
-        value: res.floor.building?.id,
+        label: res?.floor.building?.name || "Không chọn",
+        value: res?.floor.building?.id,
       });
+      setGlbURL(data?.modelURL);
+
     } catch (err) {
       console.error(err);
     }
@@ -126,7 +130,7 @@ export function RoomForm({ open, data = null, setOpen, fetchData, floorData = nu
     } else {
       resetForm();
     }
-  }, [data]);
+  }, [data, open]);
 
   const fetchBuildingList = async () => {
     // Fetch data from API
@@ -156,21 +160,25 @@ export function RoomForm({ open, data = null, setOpen, fetchData, floorData = nu
     if(floorData){
       if(buildingList){
         const building = buildingList.find((item) => item.value == floorData.buildingId)
-        setBuilding(building);
-        form.reset({
-          buildingId: Number(building.value)
-        })
+
+        if(building){
+          setBuilding(building);
+
+          form.reset({
+            buildingId: Number(floorData.buildingId),
+          }) 
+        }
       }
       if(floorList){
         setFloor(floorList.find((item) => item.value == floorData.floorId))
         form.reset({
-          floorId: Number(floorData.floorId)
+          floorId: Number(floorData.floorId),
+          buildingId: Number(floorData.buildingId)
         })
       }
       
     }
   }, [ buildingList, floorList, open])
-console.log("Check",form.watch())
 
   const fetchBuildingFloorsData = async () => {
     // Fetch data from API
@@ -221,25 +229,36 @@ console.log("Check",form.watch())
     }
   }, [building?.value]);
 
-  const onOpenChange = () => {
+  const onOpenChange = ( isOpen
+  ) => {
+    if (!isOpen) {
+      resetForm();
+      // Xử lý sự kiện khi dialog bị đóng
+    }
     setOpen(!open);
-    resetForm();
+
   };
 
   const createNewRoomService = async (payload) => {
-    const response = await axios(import.meta.env.VITE_SERVER_URL + "/rooms", {
-      method: "POST",
-      data: payload,
-    });
+    const response = await axios.post(import.meta.env.VITE_SERVER_URL + "/rooms",
+     payload,
+     {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+    );
+      
     return response;
   };
 
   const updateRoomService = async (payload) => {
-    const response = await axios(
-      import.meta.env.VITE_SERVER_URL + "/rooms/" + data.id,
+    const response = await axios.put(
+      import.meta.env.VITE_SERVER_URL + "/rooms/" + data.id ,payload,
       {
-        method: "PUT",
-        data: payload,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       }
     );
     return response;
@@ -248,7 +267,12 @@ console.log("Check",form.watch())
     form.reset({
       name: undefined,
       description: undefined,
+      model: undefined,
+      roomId: undefined,
+      buildingId: undefined,
+      floorId: undefined,
     });
+    setGlbURL(null);
     setBuilding(null);
     setFloor(null);
     setIsLoading(false);
@@ -462,7 +486,7 @@ console.log("Check",form.watch())
               <div className="flex flex-col gap-2 col-span-2">
                 <FormLabel>
                   Hình ảnh sơ đồ
-                  <span className="text-secondary ml-1.5">(*)</span>
+                  <span className="text-red-primary ">(*)</span>
                 </FormLabel>
                 <div className="p-2 relative h-40 border-2  border-dashed rounded-lg">
                   {imgUploaded ? (
@@ -470,6 +494,8 @@ console.log("Check",form.watch())
                       <Button
                         className="bg-red-primary absolute right-3 top-2 h-8 w-8 rouned-full text-white hover:bg-red-primary/90"
                         onClick={() => {
+                          const confirm = window.confirm("Bạn có chắc chắn muốn xóa ảnh này?");
+                          if (!confirm) return;
                           deleteFirebaseItem(imgUploaded);
                           setImgUploaded(null);
                           setIsLoadingImg(false);
@@ -505,6 +531,7 @@ console.log("Check",form.watch())
                           className="w-0 h-0 hidden absolute cursor-pointer z-20"
                           onInput={(e) => {
                             const file = e?.target?.files[0];
+                            
                             if (!file) return;
                             fileUploader(
                               file,
@@ -527,7 +554,7 @@ console.log("Check",form.watch())
                   <FormItem className="col-span-2">
                     <FormLabel>
                       File Model
-                      <span className="text-secondary ml-1.5">(*)</span>
+                      <span className="text-red-primary ">(*)</span>
                     </FormLabel>
                     <div className="h-fit p2 text-sm rounded-md  w-full flex items-center relative">
                       {!glbURL ? (
@@ -536,20 +563,25 @@ console.log("Check",form.watch())
                             type="file"
                             accept=".glb"
                             onChange={(e) => {
+                              // handleFileChange(e);
                               let fileURL = URL.createObjectURL(
                                 e.target.files[0]
                               );
                               setGlbURL(fileURL);
                               field.onChange(e.target.files[0]);
+                              // if (e.target.file[0]) {
+                              //   field.onChange(e.target.files[0]);
+                              // }
                             }}
                           />
                         </FormControl>
                       ) : (
-                        <div className="     w-full border rounded-md relative">
+                        <div className="   h-80   w-full border rounded-md relative">
                           <Canvas className="w-[200px]">
                             <Suspense>
                               <ambientLight intensity={0.5} />
                               <directionalLight
+                                theatreKey="directionalLight"
                                 position={[5, 5, 5]}
                                 intensity={1}
                                 castShadow
@@ -559,16 +591,18 @@ console.log("Check",form.watch())
                               <OrbitControls />
                               <BuildingModel
                                 position={[0, 0, 0]}
+                                scale={[0.8, 0.8, 0.8]}
+                                rotation={[0,  Math.PI/2, 0]} // Rotate 360 degrees around Y axis
                                 linkFile={glbURL}
                               />
                             </Suspense>
                           </Canvas>
-                          <button
-                            onClick={handleDeleteModel}
-                            className="absolute cursor-pointer bg-red-primary   text-white text-red p-2.5 hover:bg-red-600 rounded-full  right-2 top-2"
+                          <Button
+                            className="bg-red-primary absolute right-5 top-4 h-8 w-8 rouned-full text-white hover:bg-red-primary/90"
+                            onClick={handleDeleteModel }
                           >
-                            <FaTrash size={18} />
-                          </button>
+                            <Trash />
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -586,19 +620,13 @@ console.log("Check",form.watch())
                   <FormItem className="col-span-2">
                     <FormLabel>
                       Mô tả
-                      <span className="text-secondary ml-1.5">(*)</span>
+                      {/* <span className="text-red-primary ">(*)</span> */}
                     </FormLabel>
                     <div className="h-fit p2 text-sm rounded-md flex items-center">
                       <FormControl>
-                        <Textarea
-                          className="border border-r-none"
-                          type="text"
-                          {...field}
-                          placeholder="Nhập thông tin mô tả..."
-                        />
+                        <TextEditor onChange={field.onChange} value={field.value} />
                       </FormControl>
                     </div>
-
                     <FormMessage className="text-red-500 font-normal italic" />
                   </FormItem>
                 )}

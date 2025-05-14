@@ -29,6 +29,7 @@ import { BuildingModel } from "@/components/BuildingModel";
 import { OrbitControls } from "@react-three/drei";
 import { Separator } from "@/components/ui/separator";
 import { ROUTES } from "@/utils/constants";
+import { BuildingForm } from "./BuildingForm";
 
 export const Building = () => {
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ export const Building = () => {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [data, setData] = useState([]);
+  const [isOpenBuildingForm, setIsOpenBuildingForm] = useState(false);
   const [floorsData, setFloorsData] = useState([]);
   const [selectedFloor, setSelectedFloor] = useState(null);
   const [pagination, setPagination] = useState({
@@ -75,8 +77,8 @@ export const Building = () => {
         import.meta.env.VITE_SERVER_URL + "/buildings/" + buildingId + "/floors"
       );
       const data = response.data;
-      setFloorsData(data.data);
-      setPageCount(data.pagination.totalPages);
+      setFloorsData(data?.data);
+      setPageCount(data?.pagination?.totalPages);
     } catch (err) {
       console.error(err);
     }
@@ -133,7 +135,7 @@ export const Building = () => {
         return <div className="p-2 text-sm capitalize font-bold">Mô tả</div>;
       },
       cell: ({ row }) => (
-        <div className="text-left italic">
+        <div className="text-left italic max-w-[400px] truncate">
           {row.original?.description || <span className=" ">Chưa có</span>}
         </div>
       ),
@@ -169,11 +171,17 @@ export const Building = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-            <DropdownMenuItem
+              <DropdownMenuItem
                 className="flex items-center gap-2"
                 onClick={() => {
                   navigate(
-                    ROUTES.ADMIN + ROUTES.BUILDINGS + "/" + row.original.buildingId + ROUTES.FLOORS + "/" + row.original.id
+                    ROUTES.ADMIN +
+                      ROUTES.BUILDINGS +
+                      "/" +
+                      row.original.buildingId +
+                      ROUTES.FLOORS +
+                      "/" +
+                      row.original.id
                   );
                 }}
               >
@@ -223,6 +231,10 @@ export const Building = () => {
     setSelectedFloor(floor);
     setIsDialogOpen(true);
   };
+
+  const handleEditBuildingClick = () => {
+    setIsOpenBuildingForm(true);
+  };
   const handleDeleteClick = async (floor) => {
     const confirm = window.confirm("Bạn có chắc chắn muốn xóa Tầng này?");
     if (!confirm) return;
@@ -247,16 +259,42 @@ export const Building = () => {
       toast.error("Xóa tòa nhà thất bại!", err);
     }
   };
+
+  const handleRowClick = (row) => {
+    navigate(
+      ROUTES.ADMIN +
+        ROUTES.BUILDINGS +
+        "/" +
+        row.original.buildingId +
+        ROUTES.FLOORS +
+        "/" +
+        row.original.id
+    );
+  };
+
   return (
     <div className="overflow-x-auto">
       <Card className="col-span-2 bg-light-blue-bg p-4 rounded-xl  text-center lg:col-span-1 lg:p-4">
-        <CardHeader className={"p-0 flex items-center gap-2 border-b pb-0"}>
-          <IoArrowBack
-            size={20}
-            className="text-gray-800 hover:text-red-primary cursor-pointer"
-            onClick={() => navigate(-1)}
-          />
-          <h2 className="text-lg font-semibold">{data?.name}</h2>
+        <CardHeader
+          className={
+            "p-0 flex justify-between items-center gap-2 border-b pb-0"
+          }
+        >
+          <div className="flex items-center gap-2">
+            <IoArrowBack
+              size={20}
+              className="text-gray-800 hover:text-red-primary cursor-pointer"
+              onClick={() => navigate(-1)}
+            />
+            <h2 className="text-lg font-semibold">{data?.name}</h2>
+          </div>
+          <Button
+            className="bg-primary text-white flex items-center gap-2"
+            onClick={handleEditBuildingClick}
+          >
+            <LuPencilLine />
+            <span>Chỉnh sửa</span>
+          </Button>
         </CardHeader>
         <CardContent className="p-0">
           {/* <div className="flex  items-center gap-2  mb-3">
@@ -279,8 +317,8 @@ export const Building = () => {
               Model 3D:{" "}
             </p>
             {data?.modelURL ? (
-              <div className="flex-1 bg-white h-[300px] w-full border rounded-md relative">
-                <Canvas className="w-[200px] ">
+              <div className="flex-1 bg-white max-h-full h-[300px] w-full border rounded-md relative">
+                <Canvas className=" ">
                   <Suspense>
                     <ambientLight intensity={0.5} />
                     <directionalLight
@@ -291,11 +329,14 @@ export const Building = () => {
                       shadow-mapSize-width={1024}
                       shadow-mapSize-height={1024}
                     />
-                    <OrbitControls />
-                    data?.modelURL
+                    <OrbitControls
+                      minDistance={3} // Minimum zoom distance
+                      maxDistance={5} // Maximum zoom distance
+                      enablePan={false} // Disable panning
+                    />
                     <BuildingModel
                       position={[0, 0, 0]}
-                      scale={[1.5, 1.5, 1.5]}
+                      scale={[1, 1, 1]}
                       linkFile={data?.modelURL}
                     />
                   </Suspense>
@@ -325,6 +366,7 @@ export const Building = () => {
             page={page}
             columns={columns}
             setPage={setPage}
+            onRowClick={handleRowClick}
           />
         </CardContent>
       </Card>
@@ -333,6 +375,12 @@ export const Building = () => {
         setOpen={setIsDialogOpen}
         data={selectedFloor}
         fetchData={fetchBuildingFloorsData}
+      />
+      <BuildingForm
+        open={isOpenBuildingForm}
+        setOpen={setIsOpenBuildingForm}
+        data={data}
+        fetchData={fetchData}
       />
     </div>
   );

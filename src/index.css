@@ -12,6 +12,15 @@
   --color-text-secondary: #666666;
 
   --animate-rotate-resize: rotate-resize 1s ease-in-out forwards;
+  --animate-resize-rotate: resize-rotate 0.75s  forwards ease-in-out;
+/* 
+  fadeIn: Name of the animation
+  2s: Duration of the animation (2 seconds)
+  ease-in-out: Timing function that makes animation smooth at start and end
+  forwards: Animation state remains at the last keyframe after completion
+*/
+  --animate-fadeIn: fadeIn 2s ease-in-out forwards;
+  --animate-fadeIn1S: fadeIn 1s ease-in-out forwards;
 
   @keyframes rotate-resize {
     0% {
@@ -24,8 +33,29 @@
     }
     100% {
       transform: rotate(0deg);
-      width: 32rem;
+      width: 20rem;
+      min-width: fit-content; /* Đảm bảo không bị tràn ra ngoài */
     }
+  }
+  @keyframes resize-rotate {
+    0% {
+      transform: rotate(0deg);
+      width: 20rem;
+    
+    }
+    50% {
+      transform: rotate(0deg);
+      width: 4rem;
+    }
+    100% {
+      transform: rotate(45deg);
+      width: 4rem; /* Tương đương với w-16 */
+    }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 }
 
@@ -37,6 +67,9 @@ html {
   height: 100%;
 
   overflow: hidden;
+}
+button{
+  cursor: pointer;
 }
 .glassmorphism {
   background: rgba(255, 255, 255, 0.2);
@@ -70,9 +103,11 @@ html {
   }
 }
 
+
+
 .draggable-hotspot {
   cursor: move;
-  background-color: rgba(255, 0, 0, 0.7);
+  background-color: (255, 0, 0, 0.7rgba);
   border-radius: 50%;
   width: 20px;
   height: 20px;
@@ -85,7 +120,7 @@ body {
 
 /* Ẩn thanh scrollbar mặc định */
 ::-webkit-scrollbar {
-  width: 2px; /* Độ rộng của scrollbar */
+  width: 4px; /* Độ rộng của scrollbar */
 }
 
 /* Phần nền của scrollbar */
@@ -96,7 +131,7 @@ body {
 
 /* Phần "thanh kéo" của scrollbar */
 ::-webkit-scrollbar-thumb {
-  background: red; /* Hiệu ứng màu */
+  background: #de4046; /* Hiệu ứng màu */
   border-radius: 2px;
 }
 
@@ -217,6 +252,6 @@ body {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background 
   }
 }
