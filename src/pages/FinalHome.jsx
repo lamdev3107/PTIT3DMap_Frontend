@@ -30,11 +30,6 @@ const FinalHome = () => {
     setShowTourHint(false);
   };
 
-  const handleSearch = (query) => {
-    // We could implement searching of buildings based on query
-    console.log("Search query:", query);
-  };
-
   const handleSelectFloor = (floorLevel) => {
     setSelectedFloor(floorLevel);
   };
@@ -53,7 +48,6 @@ const FinalHome = () => {
 
         {/* Overlay UI Elements */}
         <Navbar
-          onSearch={handleSearch}
           openRoomCategory={openRoomCategory}
           setOpenRoomCategory={setOpenRoomCategory}
         />

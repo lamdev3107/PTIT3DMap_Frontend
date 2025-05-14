@@ -19,7 +19,7 @@ const Hotspot = ({ id, position, data, onClick }) => {
           className="relative w-fit h-fit"
           transform
           distanceFactor={1.5}
-          occlude
+          occlude={""}
           center
         >
           <div
