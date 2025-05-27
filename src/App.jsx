@@ -6,20 +6,19 @@ import { AdminLayout } from "./layouts/AdminLayout";
 import { BuildingList } from "./pages/admin/BuildingList";
 import { Building } from "./pages/admin/Building";
 import { RoomList } from "./pages/admin/RoomList";
-import TourForm from "./components/TourForm";
 import { Room } from "./pages/admin/Room";
 import FinalHome from "./pages/FinalHome";
 import DetailBuilding from "./pages/DetailBuilding";
 import { Floor } from "./pages/admin/Floor";
 import { Login } from "./pages/admin/Login";
+import { FirstPersonExp } from "./components/FirstPersonExprience/FirstPersonExp";
 
 function App() {
-
   return (
     <div style={{ width: "100vw", height: "100vh" }}>
       <Routes>
         <Route path={ROUTES.ADMIN} element={<AdminLayout />}>
-          <Route path={`${ROUTES.ADMIN}/${ROUTES.LOGIN}`} element={<Login/>} />
+          <Route path={`${ROUTES.ADMIN}/${ROUTES.LOGIN}`} element={<Login />} />
           <Route
             path={`${ROUTES.ADMIN}/${ROUTES.BUILDINGS}`}
             element={<BuildingList />}
@@ -45,8 +44,8 @@ function App() {
         <Route path="/" element={<MainLayout />}>
           {/* <Route path={"/"} element={<Test />} /> */}
           <Route path={ROUTES.BUILDING_DETAIL} element={<DetailBuilding />} />
-          <Route path="/demo360" element={<TourForm />} />
           <Route path={`/`} element={<FinalHome />} />
+          <Route path={`/demo-first-person`} element={<FirstPersonExp />} />
         </Route>
       </Routes>
     </div>

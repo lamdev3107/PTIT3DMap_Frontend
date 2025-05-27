@@ -17,14 +17,19 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-
-import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import axios from "axios";
 import { Loader2 } from "lucide-react";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import {
+  Suspense,
+  useEffect,
+  useMemo,
+  useState,
+  memo,
+  useCallback,
+} from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { FaTrash } from "react-icons/fa";
@@ -41,20 +46,77 @@ const formSchema = z.object({
   // }),
 });
 
-export function BuildingForm({ open, data = null, setOpen, fetchData }) {
+const BuildingForm = memo(({ open, data = null, setOpen, fetchData }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [glbURL, setGlbURL] = useState("");
-  const defaultValues = useMemo(() => {
-    return {
+
+  const defaultValues = useMemo(
+    () => ({
       name: undefined,
       description: undefined,
       model: undefined,
-    };
-  }, []);
+    }),
+    []
+  );
+
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues,
   });
+
+  const handleSubmit = useCallback(
+    async (values) => {
+      setIsLoading(true);
+      try {
+        const formData = new FormData();
+        formData.append("name", values.name);
+        formData.append("description", values.description);
+        if (values.model instanceof File) {
+          formData.append("model", values.model);
+        }
+
+        const response = await axios(
+          import.meta.env.VITE_SERVER_URL +
+            "/buildings" +
+            (data ? "/" + data.id : ""),
+          {
+            method: data ? "PUT" : "POST",
+            data: formData,
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        if (response?.data?.success) {
+          toast.success(
+            data ? "Cập nhật tòa nhà thành công!" : "Thêm tòa nhà thành công!"
+          );
+          setOpen(false);
+          fetchData();
+        }
+      } catch (err) {
+        toast.error(
+          data ? "Cập nhật tòa nhà thất bại!" : "Thêm tòa nhà thất bại!"
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [data, fetchData, setOpen]
+  );
+
+  const handleFileChange = useCallback(
+    (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        form.setValue("model", file);
+        setGlbURL(URL.createObjectURL(file));
+      }
+    },
+    [form]
+  );
+
   useEffect(() => {
     if (data) {
       form.reset({
@@ -64,7 +126,7 @@ export function BuildingForm({ open, data = null, setOpen, fetchData }) {
       });
       setGlbURL(data?.modelURL);
     }
-  }, [data]);
+  }, [data, form]);
 
   const handleDialogChange = (isOpen) => {
     if (!isOpen) {
@@ -172,7 +234,7 @@ export function BuildingForm({ open, data = null, setOpen, fetchData }) {
         </DialogHeader>
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={form.handleSubmit(handleSubmit)}
             className="relative h-[70vh] overflow-auto px-5 pb-5"
           >
             <div className="grid  grid-cols-2 gap-5">
@@ -249,16 +311,10 @@ export function BuildingForm({ open, data = null, setOpen, fetchData }) {
                             type="file"
                             accept=".glb"
                             onChange={(e) => {
-                              // handleFileChange(e);
                               let fileURL = URL.createObjectURL(
                                 e.target.files[0]
                               );
                               setGlbURL(fileURL);
-
-                              field.onChange(e.target.files[0]);
-                              // if (e.target.file[0]) {
-                              //   field.onChange(e.target.files[0]);
-                              // }
                             }}
                           />
                         </FormControl>
@@ -319,4 +375,8 @@ export function BuildingForm({ open, data = null, setOpen, fetchData }) {
       </DialogContent>
     </Dialog>
   );
-}
+});
+
+BuildingForm.displayName = "BuildingForm";
+
+export { BuildingForm };

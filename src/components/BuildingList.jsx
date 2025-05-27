@@ -69,39 +69,35 @@ export const BuildingList = ({ onClose, onClick }) => {
             Danh sách các tòa nhà
           </h2>
           <motion.ul className="space-y-2 h-[calc(100vh-220px)] overflow-y-auto px-12 ">
-            {/* {[...buildingList].reverse().map((building, index) => ( */}
             {HOTSPOTS.map((building, index) => (
               <motion.div
-                onClick={() => {
-                  onClick(building.time);
-                  onClose();
-                }}
                 key={building.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.2 }}
               >
-                <Link
-                  href={`/detail-building`}
-                  className="group flex items-center space-x-2 py-4 border-b last:border-none gap-2 "
-                >
+                <div className="group flex items-center space-x-2 py-4 border-b last:border-none gap-2 ">
                   <ImageZoom
                     src={building.thumbnail}
                     alt={building.name}
                     className="w-12 h-12 rounded-md bg-gray-400 object-fit-contain "
                   />
-                  <div className="flex items-center justify-between w-full">
+                  <Link
+                    onClick={() => {
+                      onClick(building.time);
+                      onClose();
+                    }}
+                    href={`/detail-building`}
+                    className="flex items-center justify-between w-full"
+                  >
                     <p className="text-[14px] text-black group-hover:text-red-primary">
                       {building.name}
                     </p>
-                    <Button
-                      onClick={() => {}}
-                      className="rounded-full border bg-white px-4 group-hover:bg-red-primary hover:bg-red-primary h-8 text-red-primary group-hover:text-white  "
-                    >
+                    <Button className="rounded-full border bg-white px-4 group-hover:bg-red-primary hover:bg-red-primary h-8 text-red-primary group-hover:text-white  ">
                       <FaAngleRight className="h-6 w-6" />
                     </Button>
-                  </div>
-                </Link>
+                  </Link>
+                </div>
               </motion.div>
             ))}
           </motion.ul>

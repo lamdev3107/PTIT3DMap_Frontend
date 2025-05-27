@@ -8,6 +8,8 @@ import {
   GizmoViewport,
   Environment,
   GradientTexture,
+  Sky,
+  Stars,
 } from "@react-three/drei";
 import { useNavigate } from "react-router-dom";
 import { HOTSPOTS } from "@/utils/hotspotData";
@@ -15,12 +17,12 @@ import mainsheet from "@/theatre/sheets/mainsheet";
 import Indicator from "./Indicator";
 import Hotspot from "./Hotspot";
 import { Button } from "@/components/ui/button";
-import { Home, RefreshCw } from "lucide-react";
+import { LucideMouse, Moon, RefreshCw, Sun } from "lucide-react";
 import { Model } from "./Model";
 import { ROUTES } from "@/utils/constants";
 import { BuildingList } from "./BuildingList";
 import { FaAngleRight } from "react-icons/fa";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 
 // Interactive Hotspot component styled like Panasonic CONNECT
 
@@ -38,8 +40,8 @@ const Ground = () => {
   );
 };
 
-const SEQUENCE_LENGTH = 26;
-const Scene = ({ handleHotspotClick, resetCamera, zoomToPosition }) => {
+const SEQUENCE_LENGTH = 25.8;
+const Scene = ({ handleHotspotClick, resetCamera, isDay }) => {
   const { camera } = useThree();
 
   // Handle camera reset
@@ -51,71 +53,68 @@ const Scene = ({ handleHotspotClick, resetCamera, zoomToPosition }) => {
       camera.updateProjectionMatrix();
     }
   }, [resetCamera, camera]);
-
-  // Handle zoom to hotspot
-  useEffect(() => {
-    if (zoomToPosition) {
-      const targetPosition = [...zoomToPosition];
-      // Điều chỉnh vị trí để camera nhìn vào hotspot từ góc đẹp hơn
-      targetPosition[0] += 1; // Thêm offset X
-      targetPosition[1] += 1; // Thêm offset Y
-      targetPosition[2] += 3; // Thêm offset Z để camera không quá gần
-
-      // Tạo animation zoom
-      let startTime = null;
-      const duration = 1000; // 1 giây
-
-      const animate = (timestamp) => {
-        if (!startTime) startTime = timestamp;
-        const elapsed = timestamp - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-
-        // Tính toán vị trí camera theo tiến trình
-        const startPos = new THREE.Vector3(
-          camera.position.x,
-          camera.position.y,
-          camera.position.z
-        );
-        const endPos = new THREE.Vector3(
-          targetPosition[0],
-          targetPosition[1],
-          targetPosition[2]
-        );
-        const newPos = new THREE.Vector3().lerpVectors(
-          startPos,
-          endPos,
-          progress
-        );
-
-        // Cập nhật vị trí camera
-        camera.position.copy(newPos);
-
-        // Nhìn vào vị trí hotspot
-        camera.lookAt(zoomToPosition[0], zoomToPosition[1], zoomToPosition[2]);
-        camera.updateProjectionMatrix();
-
-        // Tiếp tục animation nếu chưa hoàn thành
-        if (progress < 1) {
-          requestAnimationFrame(animate);
-        }
-      };
-
-      requestAnimationFrame(animate);
-    }
-  }, [zoomToPosition, camera]);
-
   return (
     <>
-      <ambientLight intensity={1} />
-      <e.directionalLight
-        theatreKey="directionalLight"
-        position={[5, 5, 5]}
-        intensity={1}
-        castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
-      />
-      {/* <fog attach="fog" args={["#ecf4ff", 10, 35]} /> */}
+      {isDay ? (
+        <>
+          <ambientLight intensity={0.5} />
+
+          <Sky
+            // Vị trí của mặt trời trong không gian 3D [x, y, z]
+            sunPosition={[50, 20, 100]}
+            // Góc nghiêng của mặt trời so với đường chân trời (0-1)
+            inclination={0.6}
+            // Góc phương vị của mặt trời (0-1)
+            azimuth={1}
+            // Khoảng cách từ camera đến bầu trời
+            distance={1000}
+            // Hệ số tán xạ Mie (ảnh hưởng đến độ mờ của khí quyển)
+            mieCoefficient={0.003}
+            // Hệ số tán xạ hướng Mie (ảnh hưởng đến độ sáng của mặt trời)
+            mieDirectionalG={0.1}
+            // Hệ số tán xạ Rayleigh - tham số chính ảnh hưởng đến màu sắc của bầu trời
+            // Giá trị càng cao thì bầu trời càng xanh đậm
+            rayleigh={1}
+            // Độ đục của khí quyển (ảnh hưởng đến độ mờ của bầu trời)
+            turbidity={0.1}
+            // Độ phơi sáng của cảnh (điều chỉnh độ sáng tổng thể)
+            exposure={1}
+          />
+
+          <Environment
+            preset="sunset"
+            blue={1}
+            backgroundBlurriness={10}
+            backgroundIntensity={10}
+            environmentIntensity={10}
+          />
+        </>
+      ) : (
+        <>
+          <ambientLight intensity={0.1} />
+          <Sky
+            sunPosition={[50, 20, 1000]}
+            // Góc phương vị của mặt trời (0-1)
+            azimuth={0.4}
+            // Khoảng cách từ camera đến bầu trời
+            distance={1000}
+            // Hệ số tán xạ Mie (ảnh hưởng đến độ mờ của khí quyển)
+            mieCoefficient={0.003}
+            // Hệ số tán xạ hướng Mie (ảnh hưởng đến độ sáng của mặt trời)
+            mieDirectionalG={0.1}
+            // Hệ số tán xạ Rayleigh - tham số chính ảnh hưởng đến màu sắc của bầu trời
+            // Giá trị càng cao thì bầu trời càng xanh đậm
+            rayleigh={0.15}
+            // Độ đục của khí quyển (ảnh hưởng đến độ mờ của bầu trời)
+            turbidity={0.8}
+            // Độ phơi sáng của cảnh (điều chỉnh độ sáng tổng thể)
+            exposure={0.1}
+          />
+          <Stars radius={100} depth={50} count={5000} factor={4} fade />
+          <Environment preset="sunset" />
+        </>
+      )}
+
       <group>
         <PerspectiveCamera
           theatreKey="Camera"
@@ -124,21 +123,10 @@ const Scene = ({ handleHotspotClick, resetCamera, zoomToPosition }) => {
           makeDefault
         />
       </group>
-      <Environment>
-        <mesh position={[0, 0, -100]}>
-          <planeGeometry args={[500, 500]} />
-          <meshBasicMaterial>
-            <GradientTexture
-              attach="map"
-              stops={[0, 1]} // Gradient stops
-              colors={["#4a90e2", "#f39c12"]} // Blue to orange gradient
-            />
-          </meshBasicMaterial>
-        </mesh>
-      </Environment>
-      <GizmoHelper alignment="bottom-left" margin={[80, 80]}>
+
+      {/* <GizmoHelper alignment="bottom-left" margin={[80, 80]}>
         <GizmoViewport labelColor="white" axisHeadScale={1} />
-      </GizmoHelper>
+      </GizmoHelper> */}
       <Ground />
       <e.group theatreKey="map">
         <Model
@@ -147,7 +135,6 @@ const Scene = ({ handleHotspotClick, resetCamera, zoomToPosition }) => {
           linkFile={"/School.glb"}
         />
       </e.group>
-
       {HOTSPOTS.map((hotspot) => (
         <Hotspot
           key={hotspot.id}
@@ -161,7 +148,29 @@ const Scene = ({ handleHotspotClick, resetCamera, zoomToPosition }) => {
   );
 };
 
-const MainMap = ({ selectedBuilding, onSelectBuilding }) => {
+const TourHint = () => {
+  return (
+    <div className="fixed bottom-16 left-1/2 w-3/5 transform -translate-x-1/2 bg-transprent rounded-lg  p-4  z-50 flex  flex-col justify-center items-center gap-3">
+      <motion.div
+        className="w-13 h-13 flex items-center justify-center rounded-xl text-red-primary bg-white shadow-lg  mb-3"
+        animate={{
+          y: [0, 10, 0],
+        }}
+        transition={{
+          duration: 1.5,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      >
+        <LucideMouse className="h-6 w-6 d-block m-auto" />
+      </motion.div>
+      <p className="text-sm text-white drop-shadow-md  w-fit">
+        Cuộn chuột để di chuyển camera tham quan học viện
+      </p>
+    </div>
+  );
+};
+const MainMap = () => {
   const sequence = mainsheet.sequence;
   const [openBuildingList, setOpenBuildingList] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
@@ -198,9 +207,6 @@ const MainMap = ({ selectedBuilding, onSelectBuilding }) => {
     setCurrentSection(newSection);
     setSectionProgress(progressInSection);
   };
-
-  // Add the missing handleHotspotClick function
-  // ... existing code ...
 
   // Cuộn chuột → cập nhật targetRef
   useEffect(() => {
@@ -251,7 +257,6 @@ const MainMap = ({ selectedBuilding, onSelectBuilding }) => {
   // Animation loop
   useEffect(() => {
     let frameId;
-
     const animate = () => {
       const current = currentRef.current;
       const target = targetRef.current;
@@ -306,7 +311,6 @@ const MainMap = ({ selectedBuilding, onSelectBuilding }) => {
 
   // Add the missing handleHotspotClick function
   const handleHotspotClick = (position, buildingId) => {
-    console.log("check buidling", buildingId);
     // Set zoom position to trigger animation
     setZoomToPosition(position);
 
@@ -315,7 +319,10 @@ const MainMap = ({ selectedBuilding, onSelectBuilding }) => {
       navigate(ROUTES.BUILDING_DETAIL.replace(":id", buildingId));
     }, 1500); // Wait 1.2 seconds for animation to complete
   };
+
   const containerRef = useRef(null);
+  const [isDay, setIsDay] = useState(true);
+
   return (
     <div className="relative w-screen h-screen">
       <div
@@ -327,17 +334,20 @@ const MainMap = ({ selectedBuilding, onSelectBuilding }) => {
           <Suspense fallback={null}>
             <SheetProvider sheet={mainsheet}>
               <Scene
-                selectedBuilding={selectedBuilding}
+                isDay={isDay}
                 handleHotspotClick={handleHotspotClick}
-                sequence={sequence}
-                scrollPosition={scrollPosition}
                 resetCamera={resetTrigger}
-                zoomToPosition={zoomToPosition}
               />
             </SheetProvider>
           </Suspense>
         </Canvas>
       </div>
+
+      {/* Tour Hint */}
+      <AnimatePresence>
+        {(currentSection === -1 ||
+          (currentSection === 0 && sectionProgress < 0.02)) && <TourHint />}
+      </AnimatePresence>
 
       {/* Progress Indicator */}
       <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-10">
@@ -348,12 +358,21 @@ const MainMap = ({ selectedBuilding, onSelectBuilding }) => {
           onSectionClick={handleSectionClick}
         />
       </div>
+      <div className="absolute bottom-8 right-[144px] z-10">
+        <Button
+          onClick={() => setIsDay(!isDay)}
+          className="bg-white text-red-primary h-9 hover:bg-red-primary hover:text-white rounded-full px-4 shadow-md transition-colors"
+          title={isDay ? "Chuyển sang chế độ đêm" : "Chuyển sang chế độ ngày"}
+        >
+          {isDay ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+        </Button>
+      </div>
 
       {/* Reset Camera Button */}
       <div className="absolute bottom-8 right-[88px] z-10">
         <Button
           onClick={handleResetCamera}
-          className="bg-red-primary text-white h-9 hover:bg-red-primary/70 rounded-full px-4 shadow-md"
+          className="rounded-full h-9 bg-white px-4 shadow-md hover:bg-red-primary text-red-primary hover:text-white "
           title="Trở về vị trí đầu"
         >
           <RefreshCw className="h-5 w-5" />
@@ -361,14 +380,14 @@ const MainMap = ({ selectedBuilding, onSelectBuilding }) => {
       </div>
 
       <div className="fixed bottom-8 left-8 z-20 flex items-center gap-3">
-        <p className="text-white drop-shadow-md text-sm">
+        <p className="text-white hidden md:block drop-shadow-md text-sm">
           Xem danh sách tòa nhà
         </p>
         <Button
           onClick={() => {
             setOpenBuildingList(true);
           }}
-          className="rounded-full bg-white px-4 hover:bg-blue-50 h-9 text-red-primary hover:text-red-primary  "
+          className="rounded-full h-9 bg-white px-4 shadow-md hover:bg-red-primary text-red-primary hover:text-white   "
         >
           <FaAngleRight className="h-6 w-6" />
         </Button>

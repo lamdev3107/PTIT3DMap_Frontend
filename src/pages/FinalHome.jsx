@@ -19,6 +19,7 @@ const FinalHome = () => {
   const [instructionsOpen, setInstructionsOpen] = useState(false);
   const [openRoomCategory, setOpenRoomCategory] = useState(false);
   const { setSelectedRoom } = useApp();
+
   useEffect(() => {
     setSelectedRoom(null);
   }, []);
@@ -26,8 +27,6 @@ const FinalHome = () => {
   const handleSelectBuilding = (id) => {
     setSelectedBuilding(id);
     setSelectedFloor(null); // Reset selected floor when a new building is selected
-    setShowScrollHint(false);
-    setShowTourHint(false);
   };
 
   const handleSelectFloor = (floorLevel) => {
@@ -41,10 +40,7 @@ const FinalHome = () => {
         <div className="fixed inset-0 bg-gradient-to-b from-white to-[#e5ecff] z-[-2]" />
 
         {/* 3D Campus */}
-        <MainMap
-          selectedBuilding={selectedBuilding}
-          onSelectBuilding={handleSelectBuilding}
-        />
+        <MainMap />
 
         {/* Overlay UI Elements */}
         <Navbar
@@ -54,7 +50,7 @@ const FinalHome = () => {
 
         {/* Floor selector (now on the left side) */}
         <FloorSelector
-          buildingId={selectedBuilding}
+          building={selectedBuilding}
           selectedFloor={selectedFloor}
           onSelectFloor={handleSelectFloor}
         />
@@ -74,7 +70,10 @@ const FinalHome = () => {
             onOpenChange={setInstructionsOpen}
           >
             <DialogTrigger asChild>
-              <Button className="rounded-full h-9 bg-white px-4 shadow-md hover:bg-blue-50 text-red-primary hover:text-red-primary  ">
+              <Button
+                title="Xem hướng dẫn"
+                className="rounded-full h-9 bg-white px-4 shadow-md hover:bg-red-primary text-red-primary hover:text-white  "
+              >
                 <AiOutlineInfo classdName="h-6 w-6" />
               </Button>
             </DialogTrigger>

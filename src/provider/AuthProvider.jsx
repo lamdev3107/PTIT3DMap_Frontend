@@ -6,14 +6,14 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user")) || null;
+  const user = JSON.parse(sessionStorage.getItem("user")) || null;
   const login = (userData) => {
-    window.localStorage.setItem("user", JSON.stringify(userData));
+    window.sessionStorage.setItem("user", JSON.stringify(userData));
   };
 
   const logout = () => {
     navigate(`${ROUTES.ADMIN}${ROUTES.LOGIN}`);
-    window.localStorage.removeItem("user");
+    window.sessionStorage.removeItem("user");
   };
 
   return (

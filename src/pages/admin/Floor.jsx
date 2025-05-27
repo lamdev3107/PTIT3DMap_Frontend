@@ -20,12 +20,19 @@ import { FloorForm } from "./FloorForm";
 import { RoomForm } from "./RoomForm";
 import { ImageZoom } from "@/components/ImageZoom";
 import { ROUTES } from "@/utils/constants";
+import TourForm from "@/components/TourForm";
+import Tour360Viewer from "@/components/Tour360Viewer";
 
 export const Floor = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  //Tour 360
+  const [isOpenTour360Form, setIsOpenTour360Form] = useState(false);
+  const [showTour360, setShowTour360] = useState(false); // State to control the 360 tour visibility
+
   const [isOpenFloorForm, setIsIsOpenFloorForm] = useState(false);
   const [data, setData] = useState([]);
   const [roomsData, setRoomsData] = useState([]);
@@ -68,7 +75,7 @@ export const Floor = () => {
       );
       const data = response.data;
       setRoomsData(data.data);
-      setPageCount(data?.pagination.totalPages);
+      setPageCount(data?.pagination?.totalPages);
     } catch (err) {
       console.error(err);
     }
@@ -119,7 +126,12 @@ export const Floor = () => {
         );
       },
       cell: ({ row }) => (
-        <div className="text-left w-fit">{row.original?.name}</div>
+        <div
+          onClick={() => handleRowClick(row)}
+          className="text-left w-fit cursor-pointer"
+        >
+          {row.original?.name}
+        </div>
       ),
     },
     {
@@ -294,6 +306,7 @@ export const Floor = () => {
             />
           </div>
 
+          {/* Description  */}
           <div
             className={`flex  ${
               data?.description && data?.description !== ""
@@ -304,11 +317,51 @@ export const Floor = () => {
             <p className="text-md font-semibold w-fit flex-shrink-0">Mô tả: </p>
             {data?.description && data?.description !== "" ? (
               <p
-                className=" ql-editor h-fit p-0 text-gray-600"
+                className=" ql-editor min-h-[35vh] h-fit p-0 text-gray-600"
                 dangerouslySetInnerHTML={{ __html: data?.description }}
               />
             ) : (
               <p className=" text-italic p-0 text-gray-600">Chưa có</p>
+            )}
+          </div>
+
+          {/* Tour 360 */}
+          <div className="col-span-2 flex justify-between  items-center">
+            <p className="text-md flex items-center gap-2 w-fit flex-shrink-0">
+              <span className="font-semibold">Tour 360:</span>
+              {data?.scenes?.length === 0 && (
+                <p className=" text-italic p-0 text-gray-600">Chưa có</p>
+              )}
+            </p>
+            {data?.scenes?.length > 0 ? (
+              <div className="flex items-start gap-3  mt-3 mb-3">
+                <Button
+                  onClick={() => setShowTour360(true)}
+                  className={`cursor-pointer flex items-center gap-2 px-4 py-1 rounded-lg`}
+                >
+                  <LuEye />
+                  <span>Xem Tour 360</span>
+                </Button>
+                <Button
+                  onClick={() => setIsOpenTour360Form(true)}
+                  className={`cursor-pointer flex items-center gap-2 px-4 py-1 rounded-lg`}
+                >
+                  <LuCirclePlus />
+                  <span>Chỉnh sửa Tour 360</span>
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-start justify-between mt-3 mb-3">
+                  <Button
+                    onClick={() => setIsOpenTour360Form(true)}
+                    className={`cursor-pointer flex items-center gap-2 px-4 py-1 rounded-lg`}
+                  >
+                    <LuCirclePlus />
+                    <span>Thêm mới Tour 360</span>
+                  </Button>
+                </div>
+              </>
             )}
           </div>
 
@@ -331,7 +384,6 @@ export const Floor = () => {
             page={page}
             columns={columns}
             setPage={setPage}
-            onRowClick={handleRowClick}
           />
         </CardContent>
       </Card>
@@ -350,6 +402,18 @@ export const Floor = () => {
         setOpen={setIsIsOpenFloorForm}
         data={data}
         fetchData={fetchData}
+      />
+      <TourForm
+        floor={data}
+        data={data?.scenes}
+        open={isOpenTour360Form}
+        setOpen={setIsOpenTour360Form}
+        fetchData={fetchData}
+      />
+      <Tour360Viewer
+        open={showTour360}
+        setOpen={setShowTour360}
+        data={data?.scenes}
       />
     </>
   );

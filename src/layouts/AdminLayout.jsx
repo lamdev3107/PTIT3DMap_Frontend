@@ -24,35 +24,36 @@ export const AdminLayout = () => {
     logout();
   };
   useEffect(() => {
-    if(!user){
+    if (!user) {
       navigate(`${ROUTES.ADMIN}${ROUTES.LOGIN}`);
+    } else {
+      navigate(`${ROUTES.ADMIN}${ROUTES.BUILDINGS}`);
     }
-  }, [user]);
-  return(
-   user ? (
+  }, []);
+  return user ? (
     <SidebarProvider className={`w-screen h-screen `}>
       <AdminSidebar />
       <SidebarInset>
         <header className="sticky top-0 z-30 bg-light-blue-bg shadow-sm flex h-16 shrink-0 items-center justify-between gap-2  px-4 ">
-          <div className="text-xl font-bold ">
-            {/* <SidebarTrigger className="-ml-1" /> */}
-            {/* Chào mừng bạn tới Bản đồ PTIT */}
-          </div>
-          <div className="flex justify-between  items-center gap-3 p-1.5 rounded-full bg-light-blue-bg">
+          <span className="text-md font-semibold">
+            Chào mừng bạn đến với hệ thống quản lý học viện
+          </span>
+          <div className="flex justify-between   items-center gap-3 p-1.5 rounded-full bg-light-blue-bg">
             <Avatar>
               <AvatarImage src="https://github.com/shadcn.png" />
               <AvatarFallback>Admin</AvatarFallback>
             </Avatar>
             <span className="text-md font-semibold">{user.name}</span>
             <Button
-              className="rounded-full p-2 bg-white hover:bg-primaryBlue hover:text-white w-fit h-fit text-gray-700"
+              title="Đăng xuất"
+              className="rounded-full p-2 bg-white hover:bg-red-primary hover:text-white w-fit h-fit text-gray-700"
               onClick={handleLogout}
             >
               <LucideLogOut />
             </Button>
           </div>
         </header>
-        <div className="py-8 px-8 overflow-y-auto">
+        <div className="py-8 px-8 overflow-auto">
           <Outlet />
         </div>
       </SidebarInset>
@@ -76,6 +77,5 @@ export const AdminLayout = () => {
     // <Navigate to={`${ROUTES.ADMIN}${ROUTES.LOGIN}`} />
     <Login />
     // <div>DITMEMA</div>
-  )
-)
+  );
 };

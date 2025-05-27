@@ -1,17 +1,21 @@
 import { Billboard, Html } from "@react-three/drei";
 import { editable as e } from "@theatre/r3f";
 import { ArrowRightIcon } from "lucide-react";
-import { useState } from "react";
+import { useState, memo, useCallback } from "react";
 import { FaInfo } from "react-icons/fa";
 import { TbTriangleInvertedFilled } from "react-icons/tb";
 
-const Hotspot = ({ id, position, data, onClick }) => {
+const Hotspot = memo(({ id, position, data, onClick }) => {
   const [hovered, setHovered] = useState(false);
-  // Xử lý click với position
-  const handleClick = (position, buildingId) => {
-    // Gọi onClick và truyền position để MainMap có thể sử dụng
-    onClick(position, buildingId);
-  };
+
+  // Sử dụng useCallback để cache hàm handleClick
+  const handleClick = useCallback(
+    (position, buildingId) => {
+      onClick(position, buildingId);
+    },
+    [onClick]
+  );
+
   return (
     <e.group theatreKey={`hotspot-${id}`} position={position}>
       <Billboard follow={true}>
@@ -79,5 +83,8 @@ const Hotspot = ({ id, position, data, onClick }) => {
       </Billboard>
     </e.group>
   );
-};
+});
+
+Hotspot.displayName = "Hotspot";
+
 export default Hotspot;

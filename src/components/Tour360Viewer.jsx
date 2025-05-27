@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Dialog, DialogContent } from "./ui/dialog";
+import { Dialog, DialogClose, DialogContent } from "./ui/dialog";
 import axios from "axios";
 import img360 from "@/assets/img360/A2105.JPG";
 import img360_2 from "@/assets/img360/A2G01.JPG";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import { IoChevronBack, IoChevronForward } from "react-icons/io5";
+import { XIcon } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 const dummyScenes = [
   {
@@ -21,6 +23,7 @@ const dummyScenes = [
 export const Tour360Viewer = ({ data, open, setOpen }) => {
   const [scenes, setScenes] = useState([]);
   const [currentScene, setCurrentScene] = useState(null);
+  console.log("check data", data);
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
   const [hotspots, setHotspots] = useState({});
   const [sceneConfigs, setSceneConfigs] = useState({});
@@ -28,7 +31,6 @@ export const Tour360Viewer = ({ data, open, setOpen }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const pannellumContainerRef = useRef(null);
-  console.log("check currentSCen", currentScene);
   // Tải dữ liệu tour từ API
 
   useEffect(() => {
@@ -75,9 +77,10 @@ export const Tour360Viewer = ({ data, open, setOpen }) => {
   }, [open]);
 
   useEffect(() => {
-    if (currentSceneIndex)
-      setHotspots(scenes[currentSceneIndex].hotSpots || {});
-  }, [currentSceneIndex]);
+    if (currentSceneIndex >= 0 && scenes[currentSceneIndex]) {
+      setHotspots(scenes[currentSceneIndex].hotSpots || []);
+    }
+  }, [currentSceneIndex, scenes]);
 
   // Tải thư viện Pannellum khi component được mount
   useEffect(() => {
@@ -146,15 +149,10 @@ export const Tour360Viewer = ({ data, open, setOpen }) => {
     };
 
     scenes.forEach((scene) => {
-      // Create a deep copy of the hotspots to prevent reference issues
-      const sceneHotspots = (hotspots[scene.title] || []).map((hotspot) => ({
-        ...hotspot,
-      }));
-
       sceneConfig.scenes[scene.title] = {
         title: scene.title,
         panorama: scene.panorama,
-        hotSpots: sceneHotspots,
+        hotSpots: scene.hotSpots || [],
         ...sceneConfigs[scene.title],
       };
     });
@@ -175,6 +173,8 @@ export const Tour360Viewer = ({ data, open, setOpen }) => {
       const newIndex = scenes.findIndex((scene) => scene.title === sceneId);
       if (newIndex !== -1) {
         setCurrentSceneIndex(newIndex);
+        // Cập nhật hotspots khi chuyển scene
+        setHotspots(scenes[newIndex].hotSpots || []);
       }
     });
   };
@@ -205,13 +205,18 @@ export const Tour360Viewer = ({ data, open, setOpen }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-[95vw] md:max-w-[95vw] h-[95vh] p-0 overflow-hidden"
+        className="min-w-screen h-full border-none rounded-sm p-0 overflow-hidden"
         onInteractOutside={(event) => {
           event.preventDefault(); // Ngăn dialog đóng khi click outside
         }}
       >
         {/* <DialogTitle></DialogTitle> */}
-
+        <DialogClose
+          onClick={() => onOpenChange(false)}
+          className="absolute z-50 top-4 right-4 bg-white text-red-primary hover:bg-red-primary hover:text-white p-2 rounded-full transition-all duration-200"
+        >
+          <XIcon />
+        </DialogClose>
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -239,7 +244,7 @@ export const Tour360Viewer = ({ data, open, setOpen }) => {
                       currentSceneIndex - 1
                     )
                   }
-                  className="bg-black absolute top-1/2 left-1 -translate-y-1/2 bg-opacity-50 hover:bg-opacity-70 text-white p-2 rounded-full transition-all duration-200"
+                  className="bg-white hover:bg-red-primary hover:text-white absolute top-1/2 left-1 -translate-y-1/2 bg-opacity-50 hover:bg-opacity-70 text-red-primary p-2 rounded-full transition-all duration-200"
                 >
                   <IoChevronBack size={24} />
                 </button>
@@ -252,7 +257,7 @@ export const Tour360Viewer = ({ data, open, setOpen }) => {
                       currentSceneIndex + 1
                     )
                   }
-                  className="bg-black absolute top-1/2 right-2 -translate-y-1/2 bg-opacity-50 hover:bg-opacity-70 text-white p-2 rounded-full transition-all duration-200"
+                  className="bg-white hover:bg-red-primary hover:text-white absolute top-1/2 right-2 -translate-y-1/2 bg-opacity-50 hover:bg-opacity-70 text-red-primary p-2 rounded-full transition-all duration-200"
                 >
                   <IoChevronForward size={24} />
                 </button>
@@ -260,27 +265,30 @@ export const Tour360Viewer = ({ data, open, setOpen }) => {
             </div>
 
             {/* Scene List at Bottom Center */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 rounded-lg p-2 max-w-[90%] overflow-x-auto">
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-70 rounded-lg p-2 min-w-[200px]  md:max-w-[40%] overflow-x-auto">
               <div className="flex space-x-2">
                 {scenes.map((scene, index) => (
                   <div
                     key={scene.id || index}
                     onClick={() => changeScene(scene.title, index)}
-                    className={`cursor-pointer transition-all duration-200 ${
+                    className={`cursor-pointer transition-all  rounded-md  duration-200 ${
                       currentSceneIndex === index
-                        ? "border-2 border-blue-500 scale-105"
+                        ? "border-2 border-red-primary"
                         : "border border-gray-400 hover:border-white"
                     }`}
                   >
-                    <div className="w-20 h-20 relative">
+                    <div className="w-10 h-10 md:w-20 md:h-20 relative overflow-hidden rounded-md">
                       <img
                         src={scene.panorama}
                         alt={scene.title}
                         className="w-full h-full object-cover"
                       />
-                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs p-1 truncate text-center">
+
+                      <p
+                        className={`absolute bg-black bottom-0 left-0 right-0 text-sm text-white line-clamp-1`}
+                      >
                         {scene.title}
-                      </div>
+                      </p>
                     </div>
                   </div>
                 ))}

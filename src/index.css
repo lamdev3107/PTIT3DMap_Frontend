@@ -12,8 +12,8 @@
   --color-text-secondary: #666666;
 
   --animate-rotate-resize: rotate-resize 1s ease-in-out forwards;
-  --animate-resize-rotate: resize-rotate 0.75s  forwards ease-in-out;
-/* 
+  --animate-resize-rotate: resize-rotate 0.75s forwards ease-in-out;
+  /* 
   fadeIn: Name of the animation
   2s: Duration of the animation (2 seconds)
   ease-in-out: Timing function that makes animation smooth at start and end
@@ -41,7 +41,6 @@
     0% {
       transform: rotate(0deg);
       width: 20rem;
-    
     }
     50% {
       transform: rotate(0deg);
@@ -54,10 +53,99 @@
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 }
+
+/* Quill CSS */
+.ql-container {
+  height:100%;
+}
+
+.ql-editor {
+  height: 100%;
+}
+
+
+
+
+/* Custom hotspot  */
+.pulse-hotspot {
+  width: 30px;
+  height: 30px;
+  background-color: red;
+  border-radius: 50%;
+  cursor: pointer;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+}
+/* FIRST PERSON EXPERIENCE */
+.dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: translate3d(-50%, -50%, 0);
+  border: 2px solid white;
+}
+.fullscreen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: all 1s;
+  z-index: 9999;
+}
+
+.stack {
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  color: #606060;
+}
+.fullscreen.notready .continue-link {
+  cursor: auto;
+  color: #606060;
+}
+
+.fullscreen.ready .continue-link {
+  cursor: pointer;
+  color: white;
+}
+
+.fullscreen.clicked {
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* END FIRST PERSON EXPERIENCE */
 
 canvas,
 body,
@@ -68,7 +156,7 @@ html {
 
   overflow: hidden;
 }
-button{
+button {
   cursor: pointer;
 }
 .glassmorphism {
@@ -103,15 +191,6 @@ button{
   }
 }
 
-
-
-.draggable-hotspot {
-  cursor: move;
-  background-color: (255, 0, 0, 0.7rgba);
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-}
 body {
   font-family: "Roboto", sans-serif;
   scrollbar-width: none; /* Firefox */
@@ -121,6 +200,7 @@ body {
 /* Ẩn thanh scrollbar mặc định */
 ::-webkit-scrollbar {
   width: 4px; /* Độ rộng của scrollbar */
+  height: 4px;
 }
 
 /* Phần nền của scrollbar */
@@ -252,6 +332,6 @@ body {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background 
+    @apply bg-background;
   }
 }
