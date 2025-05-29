@@ -17,10 +17,7 @@ import Tour360Viewer from "@/components/Tour360Viewer";
 export const Room = () => {
   const { pathname } = useLocation();
   const [data, setData] = useState([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isOpenRoomForm, setIsOpenRoomForm] = useState(false);
-  const [showTour360, setShowTour360] = useState(false); // State to control the 360 tour visibility
-
   // const fetchData = async () => {
   //   let queryParams = {};
 
@@ -78,9 +75,7 @@ export const Room = () => {
     <>
       <Card className="col-span-2 bg-light-blue-bg p-4 rounded-xl  text-center lg:col-span-1 lg:p-4 gap-4">
         <CardHeader
-          className={
-            "p-0 pb-0 flex items-center justify-between border-b gap-2"
-          }
+          className={"p-0 flex items-center justify-between border-b gap-2"}
         >
           <div className="flex items-center gap-2">
             <IoArrowBack
@@ -127,7 +122,7 @@ export const Room = () => {
               </p>
               {data?.description && data?.description !== "" ? (
                 <p
-                  className=" ql-editor h-fit p-0 text-gray-600"
+                  className=" ql-editor min-h-[35vh] h-fit p-0 text-gray-600"
                   dangerouslySetInnerHTML={{ __html: data?.description }}
                 />
               ) : (
@@ -199,56 +194,14 @@ export const Room = () => {
               <p className="italic">Chưa có</p>
             )}
           </div>
-
-          <div className="col-span-2 flex justify-between items-center">
-            <p className="text-md font-semibold text-left">Tour 360: </p>
-            {data?.Scenes?.length > 0 ? (
-              <div className="flex items-start gap-3  mt-3 mb-3">
-                <Button
-                  onClick={() => setShowTour360(true)}
-                  className={`cursor-pointer flex items-center gap-2 px-4 py-1 rounded-lg`}
-                >
-                  <LuEye />
-                  <span>Xem Tour 360</span>
-                </Button>
-                <Button
-                  onClick={() => setIsDialogOpen(true)}
-                  className={`cursor-pointer flex items-center gap-2 px-4 py-1 rounded-lg`}
-                >
-                  <LuCirclePlus />
-                  <span>Chỉnh sửa Tour 360</span>
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-start justify-between mt-3 mb-3">
-                <Button
-                  onClick={() => setIsDialogOpen(true)}
-                  className={`cursor-pointer flex items-center gap-2 px-4 py-1 rounded-lg`}
-                >
-                  <LuCirclePlus />
-                  <span>Thêm mới Tour 360</span>
-                </Button>
-              </div>
-            )}
-          </div>
         </CardContent>
       </Card>
-      <TourForm
-        roomId={data?.id}
-        data={data?.Scenes}
-        open={isDialogOpen}
-        setOpen={setIsDialogOpen}
-      />
+
       <RoomForm
         open={isOpenRoomForm}
         setOpen={setIsOpenRoomForm}
         data={data}
         fetchData={fetchData}
-      />
-      <Tour360Viewer
-        open={showTour360}
-        setOpen={setShowTour360}
-        data={data?.Scenes}
       />
     </>
   );

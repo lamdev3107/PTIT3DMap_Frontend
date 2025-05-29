@@ -16,6 +16,7 @@ import introDetailBuildingSheet from "@/theatre/sheets/introDetailBulding";
 import { ContactShadows, OrbitControls } from "@react-three/drei";
 import LoadingDetailBuilding from "@/components/LoadingDetailBuilding";
 import { useApp } from "@/provider/AppProvider";
+import { TbView360Number } from "react-icons/tb";
 
 const DetailBuilding = () => {
   const [building, setBuilding] = useState(null);
@@ -63,19 +64,10 @@ const DetailBuilding = () => {
     }
   }, [start, selectedRoom]);
 
-  // useEffect(() => {
-  //   introDetailBuildingSheet.sequence.play({
-  //     range: [0, 2],
-  //     iterationCount: 1,
-  //   });
-  //   // if (selectedRoom) {
-  //   // }
-  // }, [selectedRoom]);
-
-  const fetchRoomScenes = async () => {
+  const fetchFloorScenes = async () => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_SERVER_URL}/rooms/${selectedRoom?.id}/scenes`
+        `${import.meta.env.VITE_SERVER_URL}/floors/${selectedFloor?.id}/scenes`
       );
       setScenes(response.data.data);
     } catch (err) {
@@ -84,10 +76,10 @@ const DetailBuilding = () => {
   };
 
   useEffect(() => {
-    if (selectedRoom) {
-      fetchRoomScenes();
+    if (selectedFloor) {
+      fetchFloorScenes();
     }
-  }, [selectedRoom]);
+  }, [selectedFloor]);
 
   return (
     <div className="relative min-h-screen overflow-hidden flex items-center ">
@@ -101,7 +93,7 @@ const DetailBuilding = () => {
                 className="text-2xl text-red-primary flex items-center gap-4 font-bold text-gradient"
               >
                 <img src={logo} alt="" className="h-12" />
-                PTIT 3D MAP
+                <span className="md:block hidden">BẢN ĐỒ PTIT</span>
               </Link>
             </div>
 
@@ -110,25 +102,20 @@ const DetailBuilding = () => {
         </div>
       </header>
       <div className=" bg-transparent h-screen w-2/3  rounded-md relative ">
-        {selectedRoom && (
+        {selectedFloor && (
           <button
             onClick={() => setShowTour360(true)}
             className="absolute z-40 cursor-pointer bottom-5 left-1/2 -translate-x-1/2 px-4 py-2 bg-white text-red-primary rounded-md hover:bg-red-primary hover:text-white shadow-md transition-colors flex items-center gap-2"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
-                clipRule="evenodd"
-              />
-            </svg>
-            Xem Tour 360°
+            <TbView360Number size={20} />
+            Xem Tour 360° {selectedFloor.name}
           </button>
+        )}
+
+        {selectedRoom && (
+          <p className="text-sm text-gray-500 italic absolute z-40 bottom-5 left-36 -translate-x-1/2">
+            Mô hình 3D mang tính chất minh họa
+          </p>
         )}
 
         {!selectedRoom &&
@@ -268,7 +255,7 @@ const DetailBuilding = () => {
       </AnimatePresence>
 
       {/* Add Tour360Viewer component */}
-      {selectedRoom && (
+      {selectedFloor && (
         <Tour360Viewer
           open={showTour360}
           data={scenes}

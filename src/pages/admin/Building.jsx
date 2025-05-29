@@ -22,7 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { FloorForm } from "./FloorForm";
 import { Canvas } from "@react-three/fiber";
 import { BuildingModel } from "@/components/BuildingModel";
@@ -34,6 +34,7 @@ import { BuildingForm } from "./BuildingForm";
 export const Building = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const buildingId = useParams();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [data, setData] = useState([]);
@@ -72,7 +73,7 @@ export const Building = () => {
   const fetchBuildingFloorsData = async () => {
     // Fetch data from API
     try {
-      let buildingId = pathname.slice(-1);
+      const buildingId = pathname.split("/").slice(-1).toString();
       const response = await axios(
         import.meta.env.VITE_SERVER_URL + "/buildings/" + buildingId + "/floors"
       );
@@ -126,7 +127,12 @@ export const Building = () => {
         );
       },
       cell: ({ row }) => (
-        <div className="text-left w-fit">{row.original?.name}</div>
+        <div
+          onClick={() => handleRowClick(row)}
+          className="text-left w-fit cursor-pointer"
+        >
+          {row.original?.name}
+        </div>
       ),
     },
     {
@@ -246,7 +252,6 @@ export const Building = () => {
         }
       );
       if (response?.data?.success) {
-        console.log("floor", floor);
         if (floor?.image && floor?.image !== "") {
           deleteFirebaseItem(floor?.image);
         }
@@ -312,7 +317,7 @@ export const Building = () => {
                 : "Chưa có"}
             </p>
           </div> */}
-          <div className="flex justify-start items-center gap-2 mt-3 mb-5">
+          <div className="flex justify-start items-center gap-2  mb-5">
             <p className="text-md font-semibold w-[90px] text-left">
               Model 3D:{" "}
             </p>
@@ -354,7 +359,7 @@ export const Building = () => {
             </div>
             <Button
               onClick={() => setIsDialogOpen(true)}
-              className={`cursor-pointer flex items-center gap-2 px-2 py-1 rounded-lg`}
+              className={`cursor-pointer flex items-center gap-2 px-4 py-1 rounded-lg`}
             >
               <LuCirclePlus />
               <span>Thêm mới tầng</span>
@@ -366,7 +371,6 @@ export const Building = () => {
             page={page}
             columns={columns}
             setPage={setPage}
-            onRowClick={handleRowClick}
           />
         </CardContent>
       </Card>

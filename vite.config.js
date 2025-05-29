@@ -5,7 +5,7 @@ import path from "path";
 
 // https://vite.dev/config/
 export default defineConfig({
-  assetsInclude: ['**/*.JPG'], // 👈 Vite hiểu ảnh JPG là tài nguyên tĩnh
+  assetsInclude: ["**/*.JPG", "**/*.glb"], // 👈 Vite hiểu ảnh JPG là tài nguyên tĩnh
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

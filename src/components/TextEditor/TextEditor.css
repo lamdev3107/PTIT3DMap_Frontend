@@ -47,7 +47,7 @@
 }
 
 .ql-editor {
-  min-height: 35vh;
+  /* min-height: 35vh; */
   border-bottom-right-radius: 8px !important;
   border-bottom-left-radius: 8px !important;
   font-size: 16px;

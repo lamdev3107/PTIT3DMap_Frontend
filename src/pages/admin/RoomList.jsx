@@ -3,18 +3,10 @@ import { DataTable } from "@/components/DataTable/DataTable";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ArrowUpDown, MoreHorizontal } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import {
-  LuCirclePlus,
-  LuEye,
-  LuPencilLine,
-  LuSearch,
-  LuTrash2,
-} from "react-icons/lu";
+import { LuCirclePlus, LuEye, LuPencilLine, LuTrash2 } from "react-icons/lu";
 import { useReactTable, getCoreRowModel } from "@tanstack/react-table";
-import { IoRefresh } from "react-icons/io5";
-import { Label } from "@/components/ui/label";
 import { RoomForm } from "./RoomForm";
 import {
   DropdownMenu,
@@ -28,6 +20,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
 import { ImageZoom } from "@/components/ImageZoom";
+import useDebounce from "@/hooks/useDebounce";
 export const columns = [
   {
     accessorKey: "id",
@@ -62,6 +55,13 @@ export const RoomList = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [data, setData] = useState([]);
+  const debouncedValue = useDebounce(searchValue, 500);
+  useEffect(() => {
+    if (debouncedValue) {
+      fetchData(debouncedValue);
+    }
+  }, [debouncedValue]);
+
   const [pagination, setPagination] = useState({
     pageIndex: 0, //initial page index
     pageSize: 10, //default page size
@@ -180,7 +180,12 @@ export const RoomList = () => {
         </Button>
       ),
       cell: ({ row }) => (
-        <div className="capitalize text-left">{row.getValue("name")}</div>
+        <div
+          onClick={() => handleRowClick(row)}
+          className="capitalize text-left cursor-pointer"
+        >
+          {row.getValue("name")}
+        </div>
       ),
     },
     {
@@ -378,22 +383,16 @@ export const RoomList = () => {
                   onKeyDown={handleKeyDown}
                   className="max-w-sm min-w-72 bg-white"
                 />
-                <LuSearch
-                  onClick={() => {
-                    fetchData();
-                  }}
-                  size={19}
-                  className="absolute text-gray-400 hover:text-black cursor-pointer transition-all duration-200 ease-out top-[calc(50%)] -translate-y-[calc(50%)] right-4"
-                />
+                {searchValue !== "" && (
+                  <X
+                    onClick={() => {
+                      setSearchValue("");
+                    }}
+                    size={19}
+                    className="absolute text-gray-400 hover:text-black cursor-pointer transition-all duration-200 ease-out top-[calc(50%)] -translate-y-[calc(50%)] right-4"
+                  />
+                )}
               </div>
-              <Button
-                onClick={() => fetchData()}
-                variant="outline"
-                size="icon"
-                className="h-10 w-10"
-              >
-                <IoRefresh className="h-4 w-4" />
-              </Button>
             </div>
             <Button
               onClick={() => setIsDialogOpen(true)}
@@ -421,7 +420,6 @@ export const RoomList = () => {
             page={page}
             columns={columns}
             setPage={setPage}
-            onRowClick={handleRowClick}
           />
         </CardContent>
       </Card>

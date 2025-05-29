@@ -3,7 +3,7 @@ import { DataTable } from "@/components/DataTable/DataTable";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ArrowUpDown, MoreHorizontal } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import {
   LuCirclePlus,
@@ -25,12 +25,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
+import useDebounce from "@/hooks/useDebounce";
 
 export const BuildingList = () => {
   const navigate = useNavigate();
   const [searchValue, setSearchValue] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedBuilding, setSelectedBuilding] = useState(null);
+  const debouncedValue = useDebounce(searchValue, 500);
+
   const [data, setData] = useState([]);
   const [pagination, setPagination] = useState({
     pageIndex: 0, //initial page index
@@ -44,8 +47,8 @@ export const BuildingList = () => {
   });
   const [page, setPage] = useState(1);
   const [orderBy, setOrderBy] = useState({
-    label: "createdAt",
-    value: "desc",
+    label: "id",
+    value: "asc",
   });
   const fetchData = async () => {
     let queryParams = {};
@@ -57,6 +60,7 @@ export const BuildingList = () => {
     // Fetch data from API
     try {
       let searchParam = new URLSearchParams(queryParams).toString();
+
       const response = await axios(
         import.meta.env.VITE_SERVER_URL + "/buildings?" + searchParam
       );
@@ -68,6 +72,10 @@ export const BuildingList = () => {
       console.error(err);
     }
   };
+
+  useEffect(() => {
+    fetchData(debouncedValue);
+  }, [debouncedValue]);
 
   const columns = [
     {
@@ -123,7 +131,17 @@ export const BuildingList = () => {
       ),
 
       cell: ({ row }) => (
-        <div className="text-left w-fit">{row.original?.name}</div>
+        <div
+          onClick={() => {
+            navigate(
+              ROUTES.ADMIN +
+                ROUTES.BUILDING_DETAIL.replace(":id", row.original.id)
+            );
+          }}
+          className="text-left w-fit cursor-pointer"
+        >
+          {row.original?.name}
+        </div>
       ),
     },
     {
@@ -154,7 +172,7 @@ export const BuildingList = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 cursor-pointer"
                 onClick={() => {
                   navigate(
                     ROUTES.ADMIN + ROUTES.BUILDINGS + "/" + row.original.id
@@ -257,12 +275,6 @@ export const BuildingList = () => {
     }
   };
 
-  const handleRowClick = (row) => {
-    console.log("row", row);
-    navigate(
-      ROUTES.ADMIN + ROUTES.BUILDING_DETAIL.replace(":id", row.original.id)
-    );
-  };
   return (
     <>
       <Card className="col-span-2 bg-light-blue-bg p-4 rounded-xl  text-center lg:col-span-1 lg:p-4">
@@ -284,22 +296,16 @@ export const BuildingList = () => {
                   onKeyDown={handleKeyDown}
                   className="max-w-sm min-w-72 bg-white"
                 />
-                <LuSearch
-                  onClick={() => {
-                    fetchData();
-                  }}
-                  size={19}
-                  className="absolute text-gray-400 hover:text-black cursor-pointer transition-all duration-200 ease-out top-[calc(50%)] -translate-y-[calc(50%)] right-4"
-                />
+                {searchValue && (
+                  <X
+                    onClick={() => {
+                      setSearchValue("");
+                    }}
+                    size={19}
+                    className="absolute text-gray-400 hover:text-black cursor-pointer transition-all duration-200 ease-out top-[calc(50%)] -translate-y-[calc(50%)] right-4"
+                  />
+                )}
               </div>
-              <Button
-                onClick={() => fetchData()}
-                variant="outline"
-                size="icon"
-                className="h-10 w-10"
-              >
-                <IoRefresh className="h-4 w-4" />
-              </Button>
             </div>
             <Button
               onClick={() => setIsDialogOpen(true)}
@@ -315,7 +321,6 @@ export const BuildingList = () => {
             page={page}
             columns={columns}
             setPage={setPage}
-            onRowClick={handleRowClick}
           />
         </CardContent>
       </Card>

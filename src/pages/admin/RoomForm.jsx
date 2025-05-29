@@ -50,7 +50,13 @@ const formSchema = z.object({
   description: z.any(),
 });
 
-export function RoomForm({ open, data = null, setOpen, fetchData, floorData = null }) {
+export function RoomForm({
+  open,
+  data = null,
+  setOpen,
+  fetchData,
+  floorData = null,
+}) {
   const [isLoading, setIsLoading] = useState(false);
   const [building, setBuilding] = useState(null);
   const [buildingList, setBuildingList] = useState([]);
@@ -85,7 +91,7 @@ export function RoomForm({ open, data = null, setOpen, fetchData, floorData = nu
   }, []);
   const form = useForm({
     resolver: zodResolver(formSchema),
-    defaultValues
+    defaultValues,
   });
 
   const fetchRoom = async () => {
@@ -102,7 +108,7 @@ export function RoomForm({ open, data = null, setOpen, fetchData, floorData = nu
         navigationId: res?.navigation?.id,
         floorId: res?.floor?.id,
         buildingId: res?.floor?.building?.id,
-        model: res?.modelURL
+        model: res?.modelURL,
       });
       setImgUploaded(res?.image);
       setNavigation({
@@ -118,7 +124,6 @@ export function RoomForm({ open, data = null, setOpen, fetchData, floorData = nu
         value: res?.floor.building?.id,
       });
       setGlbURL(data?.modelURL);
-
     } catch (err) {
       console.error(err);
     }
@@ -157,28 +162,29 @@ export function RoomForm({ open, data = null, setOpen, fetchData, floorData = nu
   }, []);
 
   useEffect(() => {
-    if(floorData){
-      if(buildingList){
-        const building = buildingList.find((item) => item.value == floorData.buildingId)
+    if (floorData) {
+      if (buildingList) {
+        const building = buildingList.find(
+          (item) => item.value == floorData.buildingId
+        );
 
-        if(building){
+        if (building) {
           setBuilding(building);
 
           form.reset({
             buildingId: Number(floorData.buildingId),
-          }) 
+          });
         }
       }
-      if(floorList){
-        setFloor(floorList.find((item) => item.value == floorData.floorId))
+      if (floorList) {
+        setFloor(floorList.find((item) => item.value == floorData.floorId));
         form.reset({
           floorId: Number(floorData.floorId),
-          buildingId: Number(floorData.buildingId)
-        })
+          buildingId: Number(floorData.buildingId),
+        });
       }
-      
     }
-  }, [ buildingList, floorList, open])
+  }, [buildingList, floorList, open]);
 
   const fetchBuildingFloorsData = async () => {
     // Fetch data from API
@@ -229,32 +235,32 @@ export function RoomForm({ open, data = null, setOpen, fetchData, floorData = nu
     }
   }, [building?.value]);
 
-  const onOpenChange = ( isOpen
-  ) => {
+  const onOpenChange = (isOpen) => {
     if (!isOpen) {
       resetForm();
       // Xử lý sự kiện khi dialog bị đóng
     }
     setOpen(!open);
-
   };
 
   const createNewRoomService = async (payload) => {
-    const response = await axios.post(import.meta.env.VITE_SERVER_URL + "/rooms",
-     payload,
-     {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
+    const response = await axios.post(
+      import.meta.env.VITE_SERVER_URL + "/rooms",
+      payload,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
     );
-      
+
     return response;
   };
 
   const updateRoomService = async (payload) => {
     const response = await axios.put(
-      import.meta.env.VITE_SERVER_URL + "/rooms/" + data.id ,payload,
+      import.meta.env.VITE_SERVER_URL + "/rooms/" + data.id,
+      payload,
       {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -323,10 +329,11 @@ export function RoomForm({ open, data = null, setOpen, fetchData, floorData = nu
   };
   return (
     <Dialog className="h-fit p-0" open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[90vw] p-0 md:max-w-[65vw] h-fit" 
-       onInteractOutside={(event) => {
-        event.preventDefault(); // 👉 Ngăn dialog đóng khi click outside
-      }}
+      <DialogContent
+        className="sm:max-w-[90vw] p-0 md:max-w-[65vw] h-fit"
+        onInteractOutside={(event) => {
+          event.preventDefault(); // 👉 Ngăn dialog đóng khi click outside
+        }}
       >
         <DialogHeader className={"pb-3 pt-5 px-5 border-b"}>
           <DialogTitle>
@@ -441,7 +448,9 @@ export function RoomForm({ open, data = null, setOpen, fetchData, floorData = nu
                         <Combobox
                           className={"w-full"}
                           searchable={false}
-                          disabled={!building?.value || floorData ? true : false}
+                          disabled={
+                            !building?.value || floorData ? true : false
+                          }
                           optionList={floorList}
                           onChange={field.onChange}
                           selectedOption={floor}
@@ -456,8 +465,8 @@ export function RoomForm({ open, data = null, setOpen, fetchData, floorData = nu
                 )}
               />
 
-                 {/* Tên danh mục */}
-                <FormField
+              {/* Tên danh mục */}
+              <FormField
                 control={form.control}
                 name="navigationId"
                 render={({ field }) => (
@@ -494,7 +503,9 @@ export function RoomForm({ open, data = null, setOpen, fetchData, floorData = nu
                       <Button
                         className="bg-red-primary absolute right-3 top-2 h-8 w-8 rouned-full text-white hover:bg-red-primary/90"
                         onClick={() => {
-                          const confirm = window.confirm("Bạn có chắc chắn muốn xóa ảnh này?");
+                          const confirm = window.confirm(
+                            "Bạn có chắc chắn muốn xóa ảnh này?"
+                          );
                           if (!confirm) return;
                           deleteFirebaseItem(imgUploaded);
                           setImgUploaded(null);
@@ -531,7 +542,7 @@ export function RoomForm({ open, data = null, setOpen, fetchData, floorData = nu
                           className="w-0 h-0 hidden absolute cursor-pointer z-20"
                           onInput={(e) => {
                             const file = e?.target?.files[0];
-                            
+
                             if (!file) return;
                             fileUploader(
                               file,
@@ -592,14 +603,14 @@ export function RoomForm({ open, data = null, setOpen, fetchData, floorData = nu
                               <BuildingModel
                                 position={[0, 0, 0]}
                                 scale={[0.8, 0.8, 0.8]}
-                                rotation={[0,  Math.PI/2, 0]} // Rotate 360 degrees around Y axis
+                                rotation={[0, Math.PI / 2, 0]} // Rotate 360 degrees around Y axis
                                 linkFile={glbURL}
                               />
                             </Suspense>
                           </Canvas>
                           <Button
                             className="bg-red-primary absolute right-5 top-4 h-8 w-8 rouned-full text-white hover:bg-red-primary/90"
-                            onClick={handleDeleteModel }
+                            onClick={handleDeleteModel}
                           >
                             <Trash />
                           </Button>
@@ -624,7 +635,11 @@ export function RoomForm({ open, data = null, setOpen, fetchData, floorData = nu
                     </FormLabel>
                     <div className="h-fit p2 text-sm rounded-md flex items-center">
                       <FormControl>
-                        <TextEditor onChange={field.onChange} value={field.value} />
+                        <TextEditor
+                          className="min-h-[35vh]"
+                          onChange={field.onChange}
+                          value={field.value}
+                        />
                       </FormControl>
                     </div>
                     <FormMessage className="text-red-500 font-normal italic" />
