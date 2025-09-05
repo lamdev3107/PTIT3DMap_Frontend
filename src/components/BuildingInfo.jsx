@@ -111,10 +111,10 @@ const BuildingInfo = ({
                   />
                 </span>
               )}
-              {selectedFloor.name}
+              {selectedFloor?.name}
             </h3>
             {roomData &&
-              (roomData?.name?.length <= 60 ? (
+              (roomData?.name?.length <= 50 ? (
                 <div className=" flex items-center line-clamp-1">
                   <span className="mx-2 group:line-clamp-1">/</span>
                   <h3 className={`font-bold  text-blue-950 line-clamp-1`}>
@@ -149,19 +149,13 @@ const BuildingInfo = ({
               className="flex flex-col lg:px-10 md:px-8 px-4  h-full w-full overflow-y-auto max-h-[calc(100vh-185px)]"
             >
               {/* Image */}
-              <div className="bg-black/10 h-40 rounded-lg mb-4 flex items-center justify-center">
+              <div className="bg-black/10 h-40 rounded-lg mb-4 flex items-center justify-center min-h-20">
                 {roomData &&
                   (roomData.image ? (
-                    <motion.div
-                      className="h-full w-full"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                    >
-                      <ImageZoom
-                        src={roomData.image}
-                        className={"h-full object-contain"}
-                      />
-                    </motion.div>
+                    <ImageZoom
+                      src={roomData.image}
+                      className={"h-full object-contain"}
+                    />
                   ) : (
                     <p className="text-sm text-center">
                       Sơ đồ mặt bằng sẽ hiển thị ở đây
@@ -246,7 +240,9 @@ const BuildingInfo = ({
                           </motion.div>
                         ))
                       ) : (
-                        <p>Không có thông tin về phòng.</p>
+                        <p className="text-gray-400 italic w-full col-span-2">
+                          Không có thông tin về danh sách phòng.
+                        </p>
                       )}
                     </div>
                   </div>

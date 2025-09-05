@@ -265,7 +265,7 @@ export const Tour360Viewer = ({ data, open, setOpen }) => {
             </div>
 
             {/* Scene List at Bottom Center */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-70 rounded-lg p-2 min-w-[200px]  md:max-w-[40%] overflow-x-auto">
+            <div className="absolute bottom-4 left-1/2 transform  -translate-x-1/2 bg-white bg-opacity-70 rounded-lg p-2 min-[200px] md:max-w-[40%] overflow-x-auto">
               <div className="flex space-x-2">
                 {scenes.map((scene, index) => (
                   <div

@@ -11,6 +11,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import axios from "axios";
 import base64ToFile from "@/utils/base64ToFile";
+import toast from "react-hot-toast";
 // import "./index.css";
 
 export default function TourForm({
@@ -47,6 +48,8 @@ export default function TourForm({
 
   // Thay đổi state cấu hình để lưu theo từng scene
   const [sceneConfigs, setSceneConfigs] = useState({});
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const onOpenChange = (isOpen) => {
     if (!isOpen) {
@@ -360,7 +363,10 @@ export default function TourForm({
     scenes.forEach((scene, i) => {
       formData.append(`scenes[${i}][title]`, scene.title);
       formData.append(`scenes[${i}][floorId]`, floor.id);
-      formData.append(`scenes[${i}][panorama]`, base64ToFile(scene.panorama));
+      formData.append(
+        `scenes[${i}][panorama]`,
+        base64ToFile(scene.panorama, scene.title + ".jpg")
+      );
     });
     // Prepare hotspots data in a more compact format
     const hotspotsData = {};
@@ -378,12 +384,12 @@ export default function TourForm({
     formData.append("hotspots", JSON.stringify(hotspotsData));
     if (data.length === 0) {
       sendResquestCreateTour(formData);
-      console.log("check data", data);
     }
   };
 
   const sendResquestCreateTour = async (formData) => {
     try {
+      setIsLoading(true);
       const response = await axios.post(
         import.meta.env.VITE_SERVER_URL + "/scenes",
         formData,
@@ -396,8 +402,11 @@ export default function TourForm({
           maxContentLength: 50 * 1024 * 1024, // 50MB limit
         }
       );
+
+      toast.success("Lưu tour thành công");
+      fetchData();
+      setOpen(false);
       if (response.data.success) {
-        toast.success("Lưu tour thành công");
         fetchData();
         setOpen(false);
       } else {
@@ -407,6 +416,8 @@ export default function TourForm({
       console.error("Error saving tour:", err);
       toast.error("Lưu tour thất bại !");
       throw err;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -450,7 +461,6 @@ export default function TourForm({
     const coords = pannellumInstance.mouseEventToCoords(e);
     if (coords) {
       const [yaw, pitch] = coords;
-      console.log("Check editing hotspot", editingHotspot);
 
       // Cập nhật vị trí hotspot
       if (editingHotspot) {
@@ -715,11 +725,20 @@ export default function TourForm({
           <div className="flex space-x-2 text-white my-3 ">
             <button
               onClick={() => saveTour()}
-              disabled={scenes.length === 0}
+              disabled={scenes.length === 0 || isLoading}
               className={`flex items-center bg-indigo-500 hover:bg-indigo-600 px-4 py-2 rounded disabled:opacity-50 disabled:cursor-default disabled:select-none disabled:hover:bg-indigo-500`}
             >
-              <Save className="w-5 h-5 mr-2" />
-              Lưu Tour
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Đang lưu...
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5 mr-2" />
+                  Lưu Tour
+                </>
+              )}
             </button>
             <button
               disabled={scenes.length === 0}

@@ -66,11 +66,13 @@ const BuildingForm = memo(({ open, data = null, setOpen, fetchData }) => {
 
   const handleSubmit = useCallback(
     async (values) => {
+      alert("Ccheck ");
       setIsLoading(true);
       try {
         const formData = new FormData();
         formData.append("name", values.name);
         formData.append("description", values.description);
+        console.log("values.model", values.model);
         if (values.model instanceof File) {
           formData.append("model", values.model);
         }
@@ -311,6 +313,7 @@ const BuildingForm = memo(({ open, data = null, setOpen, fetchData }) => {
                             type="file"
                             accept=".glb"
                             onChange={(e) => {
+                              field.onChange(e.target.files[0]);
                               let fileURL = URL.createObjectURL(
                                 e.target.files[0]
                               );

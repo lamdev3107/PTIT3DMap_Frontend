@@ -34,6 +34,7 @@ const DetailBuilding = () => {
       const response = await axios.get(
         `${import.meta.env.VITE_SERVER_URL}/buildings/${buildingId}`
       );
+      console.log(response.data.data);
       setBuilding(response.data.data);
       setSelectedFloor(response.data.data.floors[0]);
     } catch (err) {
@@ -148,15 +149,6 @@ const DetailBuilding = () => {
                         castShadow // Thêm hiệu ứng đổ bóng lên model
                       />
                     </e.group>
-                    {/* <ContactShadows
-                      scale={15}
-                      blur={3}
-                      far={10}
-                      position={[0, 0, 0]}
-                      opacity={0.5}
-                      resolution={1024}
-                      color="#000000"
-                    /> */}
                   </Suspense>
                 </SheetProvider>
               </Canvas>

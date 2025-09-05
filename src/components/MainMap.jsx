@@ -179,6 +179,8 @@ const MainMap = () => {
   const [resetTrigger, setResetTrigger] = useState(false);
   const [zoomToPosition, setZoomToPosition] = useState(null);
   const navigate = useNavigate();
+  // scrollSpeed: Tốc độ cuộn chuột, càng lớn thì camera di chuyển càng nhanh
+  // damping: Hệ số làm mượt chuyển động, càng nhỏ thì chuyển động càng mượt
   const scrollSpeed = 0.002;
   const damping = 0.04;
   const currentRef = useRef(sequence.position);

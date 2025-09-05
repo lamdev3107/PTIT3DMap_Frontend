@@ -30,6 +30,7 @@ import { OrbitControls } from "@react-three/drei";
 import { Separator } from "@/components/ui/separator";
 import { ROUTES } from "@/utils/constants";
 import { BuildingForm } from "./BuildingForm";
+import { deleteFirebaseItem } from "@/utils/fileUploader";
 
 export const Building = () => {
   const navigate = useNavigate();
@@ -258,10 +259,10 @@ export const Building = () => {
         toast.success("Xóa tầng thành công!");
         fetchBuildingFloorsData();
       } else {
-        toast.error("Xóa loại tin thất bại!");
+        toast.error("Xóa tầng thất bại");
       }
     } catch (err) {
-      toast.error("Xóa tòa nhà thất bại!", err);
+      toast.error("Xóa tầng thất bại!", err);
     }
   };
 

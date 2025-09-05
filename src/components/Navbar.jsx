@@ -8,6 +8,7 @@ import useDebounce from "@/hooks/useDebounce";
 import campusTourData from "@/assets/campus_tour.json";
 import Tour360Viewer from "./Tour360Viewer";
 import { TbView360Number } from "react-icons/tb";
+import { useApp } from "@/provider/AppProvider";
 
 const Navbar = ({ setOpenRoomCategory }) => {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
@@ -17,9 +18,11 @@ const Navbar = ({ setOpenRoomCategory }) => {
   const [scenes, setScenes] = useState([]);
   const [results, setResults] = useState([]);
   const navigate = useNavigate();
+  const { setSelectedRoom } = useApp();
 
   useEffect(() => {
     setScenes(campusTourData.scenes);
+    console.log("check scenes", campusTourData.scenes);
   }, [campusTourData]);
 
   const fetchData = async (query) => {
@@ -176,6 +179,7 @@ const Navbar = ({ setOpenRoomCategory }) => {
                     {results.map((result) => (
                       <button
                         onClick={() => {
+                          setSelectedRoom(result);
                           navigate(
                             ROUTES.BUILDING_DETAIL.replace(
                               ":id",

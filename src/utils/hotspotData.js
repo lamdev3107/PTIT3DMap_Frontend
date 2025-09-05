@@ -104,7 +104,8 @@ const HOTSPOTS = [
   {
     id: "ct",
     name: "Căn tin PTIT",
-    type: "info",
+    type: "building",
+    buildingId: 8,
     time: 18.3,
     thumbnail: ct_thumb,
     position: new THREE.Vector3(0, 0, 0),

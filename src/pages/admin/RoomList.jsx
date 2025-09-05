@@ -115,6 +115,7 @@ export const RoomList = () => {
           method: "DELETE",
         }
       );
+      console.log("response", response);
       if (response?.data?.success) {
         toast.success("Xóa phòng ban thành công!");
         if (room?.image) {
@@ -125,7 +126,7 @@ export const RoomList = () => {
         toast.error("Xóa phòng ban thất bại!!");
       }
     } catch (err) {
-      toast.error("Xóa phòng ban thất bại!", err);
+      toast.error("Xóa phòng ban thất bại", err);
     }
   };
   const columns = [

@@ -3,7 +3,7 @@ import { DataTable } from "@/components/DataTable/DataTable";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ArrowUpDown, MoreHorizontal } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { LuCirclePlus, LuEye, LuPencilLine, LuTrash2 } from "react-icons/lu";
 import { IoArrowBack } from "react-icons/io5";
 import { useReactTable, getCoreRowModel } from "@tanstack/react-table";
@@ -22,6 +22,7 @@ import { ImageZoom } from "@/components/ImageZoom";
 import { ROUTES } from "@/utils/constants";
 import TourForm from "@/components/TourForm";
 import Tour360Viewer from "@/components/Tour360Viewer";
+import { deleteFirebaseItem } from "@/utils/fileUploader";
 
 export const Floor = () => {
   const navigate = useNavigate();
@@ -248,7 +249,6 @@ export const Floor = () => {
         }
       );
       if (response?.data?.success) {
-        console.log("room", room);
         if (room?.image && room?.image !== "") {
           deleteFirebaseItem(room?.image);
         }
@@ -266,6 +266,16 @@ export const Floor = () => {
     navigate(ROUTES.ADMIN + ROUTES.ROOM_DETAIL.replace(":id", row.original.id));
   };
 
+  const scenes = useMemo(() => {
+    if (!data?.scenes) return [];
+    let returnScenes = data?.scenes.map((scene) => {
+      return {
+        ...scene,
+        panorama: `http://localhost:8000${scene.panorama}`,
+      };
+    });
+    return returnScenes;
+  }, [data]);
   return (
     <>
       <Card className="col-span-2 bg-light-blue-bg p-4 rounded-xl  text-center lg:col-span-1 lg:p-4">
@@ -296,15 +306,22 @@ export const Floor = () => {
           </Button>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="flex flex-col justify-start mx-auto h-56">
-            <p className="text-md font-semibold">Sơ đồ mặt bằng: </p>
+          {data?.image && data?.image !== "" ? (
+            <div className="flex flex-col justify-start mx-auto h-56">
+              <p className="text-md font-semibold">Sơ đồ mặt bằng: </p>
 
-            <ImageZoom
-              src={data?.image}
-              alt="image"
-              className="h-full w-fit mx-auto object-contain"
-            />
-          </div>
+              <ImageZoom
+                src={data?.image}
+                alt="image"
+                className="h-full w-fit mx-auto object-contain"
+              />
+            </div>
+          ) : (
+            <div className="flex flex-col justify-start h-fit">
+              <p className="text-md font-semibold">Sơ đồ mặt bằng: </p>
+              <p className="text-italic p-0 text-gray-600">Chưa có</p>
+            </div>
+          )}
 
           {/* Description  */}
           <div
@@ -413,7 +430,7 @@ export const Floor = () => {
       <Tour360Viewer
         open={showTour360}
         setOpen={setShowTour360}
-        data={data?.scenes}
+        data={scenes}
       />
     </>
   );

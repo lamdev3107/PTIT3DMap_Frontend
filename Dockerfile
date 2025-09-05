@@ -1,23 +1,40 @@
-#base Image
-# This line specifies the base image for the Docker container
-# Using Node.js version 20.10.0 with Alpine Linux 3.17 as the base
-# Alpine is a lightweight Linux distribution, making the image smaller
-FROM node:20.10.0-alpine3.17
+# Frontend Dockerfile (./frontend/Dockerfile)
+# Multi-stage build
+FROM node:18-alpine as build
 
-#Create app directory
+# Tăng heap size cho Node.js
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
+# Set working directory
 WORKDIR /app
 
-#Copy package.json and package-lock.json
+# Copy package files
 COPY package*.json ./
 
-#Install app dependencies
+# Install dependencies
 RUN npm install
 
-#Copy app source code
+# Copy source code
 COPY . .
 
-#Expose port
-EXPOSE 3000
+# Build arguments
+ARG REACT_APP_API_URL
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
 
-#Start the app
-CMD ["npm","run dev"]
+# Build the app
+RUN npm run build
+
+# Production stage
+FROM nginx:alpine
+
+# Copy custom nginx config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy built app from build stage
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Expose port 80
+EXPOSE 80
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
